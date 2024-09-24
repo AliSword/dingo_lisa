@@ -104,7 +104,11 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
 
     ref_time = data_settings["ref_time"]
     # Build detector objects
-    ifo_list = InterferometerList(data_settings["detectors"])
+    ifos = data_settings["detectors"]
+    if ifos in ("LISA1", "LISA2"):
+        ifo_list = LISAInterferometerList(data_settings["detectors"])
+    else:
+        ifo_list = InterferometerList(data_settings["detectors"])
 
     # Build transforms.
     transforms = [SampleExtrinsicParameters(extrinsic_prior_dict),
