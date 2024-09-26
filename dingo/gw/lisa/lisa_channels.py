@@ -1,6 +1,29 @@
 import numpy as np
 
 
+class LISAInterferometerList(list):
+    """
+    Create a list of LISA interferometer objects.
+    """
+
+    def __init__(self, interferometers):
+        """
+        Instantiate a new LISAInterferometerList object.
+
+        Attributes
+        ----------
+
+        interferometers: iterable.
+        """
+
+        super(LISAInterferometerList, self).__init__()
+        if isinstance(interferometers, str):
+            raise TypeError("Input must be a list")
+        for ifo in interferometers:
+            if isinstance(ifo, str):
+                ifo = get_empty_lisa_interferometer(ifo)
+            self.append(ifo)
+
 
 class LISALowFrequencyInterferometer(object):
     """ 
@@ -18,6 +41,7 @@ class LISALowFrequencyInterferometer(object):
         omega : float
             Orbital frequency of the detector.
     """
+
     phi_0 = 0.0
     alpha_0 = 0.0 
     T = np.pi*1e7
@@ -25,7 +49,7 @@ class LISALowFrequencyInterferometer(object):
     
     def __init__(self, name):
         """ 
-        Parameters
+        Attributes
         ----------
 
         name : str
@@ -36,7 +60,7 @@ class LISALowFrequencyInterferometer(object):
         
     def antenna_response(self, theta_s, phi_s, theta_l, phi_l, t_ref, mode):  
         """
-        Returns the LISA1 and LISA2 antenna pattern functions in the Solar System Barycenter
+        Return the LISA1 and LISA2 antenna pattern functions in the Solar System Barycenter
         
         Parameters
         ----------
@@ -59,12 +83,12 @@ class LISALowFrequencyInterferometer(object):
         
         phi = LISALowFrequencyInterferometer.alpha_0 + LISALowFrequencyInterferometer.omega * t_ref + np.arctan2(np.sqrt(3.) * np.cos(theta_s) + np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s) , 2 * np.sin(theta_s) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s))
         
-        psiup = 0.5 * np.cos(theta_l) -0.5 * np.sqrt(3.0) * np.sin(theta_l)*np.cos(LISALowFrequencyInterferometer.phi_0 + 
-                    LISALowFrequencyInterferometer.omega * t_ref - phi_l) - costheta * (np.cos(theta_l) * np.cos(theta_s) + np.sin(theta_l) * np.sin(theta_s) * np.cos(phi_l-phi_s))
+        psiup = 0.5 * np.cos(theta_l) - 0.5 * np.sqrt(3.0) * np.sin(theta_l) * np.cos(LISALowFrequencyInterferometer.phi_0 + 
+                    LISALowFrequencyInterferometer.omega * t_ref - phi_l) - costheta * (np.cos(theta_l) * np.cos(theta_s) + np.sin(theta_l) * np.sin(theta_s) * np.cos(phi_l - phi_s))
         
-        psidown = 0.5 * np.sin(theta_l) * np.sin(theta_s) * np.sin(phi_l-phi_s) - 0.5 * np.sqrt(3.0) * \
+        psidown = 0.5 * np.sin(theta_l) * np.sin(theta_s) * np.sin(phi_l - phi_s) - 0.5 * np.sqrt(3.0) * \
                     np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * \
-                    (np.cos(theta_l) * np.sin(theta_s) * np.sin(phi_s) - np.cos(theta_s)*np.sin(theta_l)*np.sin(phi_l)) - 0.5 * \
+                    (np.cos(theta_l) * np.sin(theta_s) * np.sin(phi_s) - np.cos(theta_s) * np.sin(theta_l) * np.sin(phi_l)) - 0.5 * \
                     np.sqrt(3.0) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * (np.cos(theta_s) * np.sin(theta_l) * np.cos(phi_l) - np.cos(theta_l) * np.sin(theta_s) * np.cos(phi_s))
         
         psi = np.arctan2(psiup, psidown)
