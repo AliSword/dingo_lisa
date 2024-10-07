@@ -57,11 +57,11 @@ class LISALowFrequencyInterferometer(object):
         """
         
         self.name = name 
-        
-    def antenna_response(self, theta_s, phi_s, theta_l, phi_l, t_ref, mode):  
+    
+    def get_psi(self, theta_s, phi_s, theta_l, phi_l, t_ref):
         """
-        Return the LISA1 and LISA2 antenna pattern functions in the Solar System Barycenter
-        
+        Return the source polarization angle in the Solar System Barycenter
+
         Parameters
         ----------
         theta_s : float
@@ -74,15 +74,8 @@ class LISALowFrequencyInterferometer(object):
             Azimuthal angle of the source's angular momentum.
         t_ref : float
             Reference time.
-        mode : str
-            Polarization mode, e.g. plus, cross
         """
-        
-        costheta = 0.5 * np.cos(theta_s) - 0.5 * np.sqrt(3.) * np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + 
-                    LISALowFrequencyInterferometer.omega * t_ref - phi_s)
-        
-        phi = LISALowFrequencyInterferometer.alpha_0 + LISALowFrequencyInterferometer.omega * t_ref + np.arctan2(np.sqrt(3.) * np.cos(theta_s) + np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s) , 2 * np.sin(theta_s) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s))
-        
+
         psiup = 0.5 * np.cos(theta_l) - 0.5 * np.sqrt(3.0) * np.sin(theta_l) * np.cos(LISALowFrequencyInterferometer.phi_0 + 
                     LISALowFrequencyInterferometer.omega * t_ref - phi_l) - costheta * (np.cos(theta_l) * np.cos(theta_s) + np.sin(theta_l) * np.sin(theta_s) * np.cos(phi_l - phi_s))
         
@@ -92,6 +85,41 @@ class LISALowFrequencyInterferometer(object):
                     np.sqrt(3.0) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * (np.cos(theta_s) * np.sin(theta_l) * np.cos(phi_l) - np.cos(theta_l) * np.sin(theta_s) * np.cos(phi_s))
         
         psi = np.arctan2(psiup, psidown)
+
+        return psi
+
+        
+    def antenna_response(self, theta_s, phi_s, t_ref, mode):  
+        """
+        Return the LISA1 and LISA2 antenna pattern functions in the Solar System Barycenter
+        
+        Parameters
+        ----------
+        theta_s : float
+            Source's polar angle. 
+        phi_s : float
+            Source's azimuthal angle.
+        t_ref : float
+            Reference time.
+        mode : str
+            Polarization mode, e.g. plus, cross
+        """
+        
+        costheta = 0.5 * np.cos(theta_s) - 0.5 * np.sqrt(3.) * np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + 
+                    LISALowFrequencyInterferometer.omega * t_ref - phi_s)
+        
+        phi = LISALowFrequencyInterferometer.alpha_0 + LISALowFrequencyInterferometer.omega * t_ref + np.arctan2(np.sqrt(3.) * np.cos(theta_s) + np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s) , 2 * np.sin(theta_s) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s))
+        
+        '''psiup = 0.5 * np.cos(theta_l) - 0.5 * np.sqrt(3.0) * np.sin(theta_l) * np.cos(LISALowFrequencyInterferometer.phi_0 + 
+                    LISALowFrequencyInterferometer.omega * t_ref - phi_l) - costheta * (np.cos(theta_l) * np.cos(theta_s) + np.sin(theta_l) * np.sin(theta_s) * np.cos(phi_l - phi_s))
+        
+        psidown = 0.5 * np.sin(theta_l) * np.sin(theta_s) * np.sin(phi_l - phi_s) - 0.5 * np.sqrt(3.0) * \
+                    np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * \
+                    (np.cos(theta_l) * np.sin(theta_s) * np.sin(phi_s) - np.cos(theta_s) * np.sin(theta_l) * np.sin(phi_l)) - 0.5 * \
+                    np.sqrt(3.0) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * (np.cos(theta_s) * np.sin(theta_l) * np.cos(phi_l) - np.cos(theta_l) * np.sin(theta_s) * np.cos(phi_s))
+        
+        psi = np.arctan2(psiup, psidown)'''
+        psi = self.get_psi(theta_s, phi_s, theta_l, phi_l, t_ref)
         
         if self.name =='LISA1':
             if mode =='plus':
