@@ -147,24 +147,24 @@ class ProjectOntoDetectors(object):
         parameters = sample["parameters"].copy()
         extrinsic_parameters = sample["extrinsic_parameters"].copy()
 
-        if isinstance(self.ifo_list, InterferometerList):
-            try:
-                d_ref = parameters["luminosity_distance"]
-                d_new = extrinsic_parameters.pop("luminosity_distance")
-                ra = extrinsic_parameters.pop("ra")
-                dec = extrinsic_parameters.pop("dec")
-                psi = extrinsic_parameters.pop("psi")
-                tc_ref = parameters["geocent_time"]
-                assert tc_ref == 0, (
+        #if isinstance(self.ifo_list, InterferometerList):
+        try:
+            d_ref = parameters["luminosity_distance"]
+            d_new = extrinsic_parameters.pop("luminosity_distance")
+            ra = extrinsic_parameters.pop("ra")
+            dec = extrinsic_parameters.pop("dec")
+            psi = extrinsic_parameters.pop("psi")
+            tc_ref = parameters["geocent_time"]
+            assert tc_ref == 0, (
                     "This should always be 0. If for some reason "
                     "you want to save time shifted polarizations,"
                     " then remove this assert statement."
                 )
-                tc_new = extrinsic_parameters.pop("geocent_time")
-                response_vars = [ra, dec, self.ref_time, psi]
-            except KeyError as e:
-                raise ValueError(f"Missing parameters: {e}")
-        elif isinstance(self.ifo_list, LISAInterferometerList):
+            tc_new = extrinsic_parameters.pop("geocent_time")
+            response_vars = [ra, dec, self.ref_time, psi]
+        except KeyError as e:
+            raise ValueError(f"Missing parameters: {e}")
+        '''elif isinstance(self.ifo_list, LISAInterferometerList):
             try:
                 d_ref = parameters["luminosity_distance"]
                 d_new = extrinsic_parameters.pop("luminosity_distance")
@@ -177,7 +177,7 @@ class ProjectOntoDetectors(object):
                 tc_new = extrinsic_parameters.pop("geocent_time")
                 response_vars = [theta_s, phi_s, theta_l, phi_l, self.ref_time]
             except KeyError as e:
-                raise ValueError(f"Missing parameter: {e}")
+                raise ValueError(f"Missing parameter: {e}")'''
 
         # (1) rescale polarizations and set distance parameter to sampled value
         hc = sample["waveform"]["h_cross"] * d_ref / d_new
@@ -191,21 +191,35 @@ class ProjectOntoDetectors(object):
             fc = ifo.antenna_response(*response_vars, mode="cross")
             strain = fp * hp + fc * hc
 
-            # (3) time shift the strain. If polarizations are timeshifted by
-            #     tc_ref != 0, undo this here by subtracting it from dt.
+            #if isinstance(self.ifo_list, InterferometerList):
+                
+                # (3) time shift the strain. If polarizations are timeshifted by
+                #     tc_ref != 0, undo this here by subtracting it from dt.
             dt = extrinsic_parameters[f"{ifo.name}_time"] - tc_ref
             strains[ifo.name] = self.domain.time_translate_data(strain, dt)
 
-        # Add extrinsic parameters corresponding to the transformations
-        # applied in the loop above to parameters. These have all been popped off of
-        # extrinsic_parameters, so they only live one place.
-        parameters["ra"] = ra
-        parameters["dec"] = dec
-        parameters["psi"] = psi
-        parameters["geocent_time"] = tc_new
-        for ifo in self.ifo_list:
+                # Add extrinsic parameters corresponding to the transformations
+                # applied in the loop above to parameters. These have all been popped off of
+                # extrinsic_parameters, so they only live one place.
+            parameters["ra"] = ra
+            parameters["dec"] = dec
+            parameters["psi"] = psi
+            parameters["geocent_time"] = tc_new
+                
+                # Add ifo time and popped off it of extrinsic parameters
             param_name = f"{ifo.name}_time"
             parameters[param_name] = extrinsic_parameters.pop(param_name)
+            '''elif isinstance(self.ifo_list, LISAInterferometerList):
+                strains[ifo.name] = strain 
+                    
+                # Add extrinsic parameters corresponding to the transformations
+                # applied in the loop above to parameters. These have all been popped off of
+                # extrinsic_parameters, so they only live one place. 
+                parameters["theta_s"] = theta_s
+                parameters["phi_s"] = phi_s
+                parameters["theta_l"] = theta_l
+                parameters["phi_l"] = phi_l
+                parameters["geocent_time"] = tc_new'''
 
         sample["waveform"] = strains
         sample["parameters"] = parameters
