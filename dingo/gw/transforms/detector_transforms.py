@@ -146,21 +146,38 @@ class ProjectOntoDetectors(object):
         # input_sample, and we don't want to modify input_sample
         parameters = sample["parameters"].copy()
         extrinsic_parameters = sample["extrinsic_parameters"].copy()
-        try:
-            d_ref = parameters["luminosity_distance"]
-            d_new = extrinsic_parameters.pop("luminosity_distance")
-            ra = extrinsic_parameters.pop("ra")
-            dec = extrinsic_parameters.pop("dec")
-            psi = extrinsic_parameters.pop("psi")
-            tc_ref = parameters["geocent_time"]
-            assert tc_ref == 0, (
-                "This should always be 0. If for some reason "
-                "you want to save time shifted polarizations,"
-                " then remove this assert statement."
-            )
-            tc_new = extrinsic_parameters.pop("geocent_time")
-        except:
-            raise ValueError("Missing parameters.")
+
+        if isinstance(self.ifo_list, InterferometerList):
+            try:
+                d_ref = parameters["luminosity_distance"]
+                d_new = extrinsic_parameters.pop("luminosity_distance")
+                ra = extrinsic_parameters.pop("ra")
+                dec = extrinsic_parameters.pop("dec")
+                psi = extrinsic_parameters.pop("psi")
+                tc_ref = parameters["geocent_time"]
+                assert tc_ref == 0, (
+                    "This should always be 0. If for some reason "
+                    "you want to save time shifted polarizations,"
+                    " then remove this assert statement."
+                )
+                tc_new = extrinsic_parameters.pop("geocent_time")
+                response_vars = [ra, dec, self.ref_time, psi]
+            except KeyError as e:
+                raise ValueError(f"Missing parameters: {e}")
+        elif isinstance(self.ifo_list, LISAInterferometerList):
+            try:
+                d_ref = parameters["luminosity_distance"]
+                d_new = extrinsic_parameters.pop("luminosity_distance")
+                theta_s = extrinsic_parameters.pop("theta_s")
+                phi_s = extrinsic_parameters.pop("phi_s")
+                theta_l = extrinsic_parameters.pop("theta_l")
+                phi_l = extrinsic_parameters.pop("phi_l")
+                tc_ref = parameters["geocent_time"]
+                assert tc_ref == 0
+                tc_new = extrinsic_parameters.pop("geocent_time")
+                response_vars = [theta_s, phi_s, theta_l, phi_l, self.ref_time]
+            except KeyError as e:
+                raise ValueError(f"Missing parameter: {e}")
 
         # (1) rescale polarizations and set distance parameter to sampled value
         hc = sample["waveform"]["h_cross"] * d_ref / d_new
@@ -170,8 +187,8 @@ class ProjectOntoDetectors(object):
         strains = {}
         for ifo in self.ifo_list:
             # (2) project strains onto the different detectors
-            fp = ifo.antenna_response(ra, dec, self.ref_time, psi, mode="plus")
-            fc = ifo.antenna_response(ra, dec, self.ref_time, psi, mode="cross")
+            fp = ifo.antenna_response(*response_vars, mode="plus")
+            fc = ifo.antenna_response(*response_vars, mode="cross")
             strain = fp * hp + fc * hc
 
             # (3) time shift the strain. If polarizations are timeshifted by
