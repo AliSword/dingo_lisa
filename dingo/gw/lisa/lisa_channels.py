@@ -27,7 +27,7 @@ class LISAInterferometerList(list):
 
 class LISALowFrequencyInterferometer(object):
     """ 
-        Class to create a LISA interferometer object assuming the low frequency approximation.
+        Class to create a LISA interferometer object assuming the low frequency approximation. 
         
         Static parameters
         -----------------
@@ -58,9 +58,9 @@ class LISALowFrequencyInterferometer(object):
         
         self.name = name 
     
-    def get_psi(self, theta_s, phi_s, theta_l, phi_l, t_ref):
+   ''' def detector_to_ecliptic(self, theta_s, phi_s, theta_l, phi_l, t_ref):
         """
-        Return the source polarization angle in the Solar System Barycenter
+        Compute sky location and polarization in the SSB frame. Based on arXiv:gr-qc/9703068.
 
         Parameters
         ----------
@@ -75,6 +75,9 @@ class LISALowFrequencyInterferometer(object):
         t_ref : float
             Reference time.
         """
+        costheta = 0.5 * np.cos(theta_s) - 0.5 * np.sqrt(3.) * np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s)
+        
+        phi = LISALowFrequencyInterferometer.alpha_0 + LISALowFrequencyInterferometer.omega * t_ref + np.arctan2(np.sqrt(3.) * np.cos(theta_s) + np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s) , 2 * np.sin(theta_s) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s))
 
         psiup = 0.5 * np.cos(theta_l) - 0.5 * np.sqrt(3.0) * np.sin(theta_l) * np.cos(LISALowFrequencyInterferometer.phi_0 + 
                     LISALowFrequencyInterferometer.omega * t_ref - phi_l) - costheta * (np.cos(theta_l) * np.cos(theta_s) + np.sin(theta_l) * np.sin(theta_s) * np.cos(phi_l - phi_s))
@@ -83,15 +86,15 @@ class LISALowFrequencyInterferometer(object):
                     np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * \
                     (np.cos(theta_l) * np.sin(theta_s) * np.sin(phi_s) - np.cos(theta_s) * np.sin(theta_l) * np.sin(phi_l)) - 0.5 * \
                     np.sqrt(3.0) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * (np.cos(theta_s) * np.sin(theta_l) * np.cos(phi_l) - np.cos(theta_l) * np.sin(theta_s) * np.cos(phi_s))
-        
+
         psi = np.arctan2(psiup, psidown)
 
-        return psi
+        return costheta, phi, psi'''
 
-        
-    def antenna_response(self, theta_s, phi_s, t_ref, mode):  
+
+    def antenna_response(self, theta_s, phi_s, psi, t_ref, mode):  
         """
-        Return the LISA1 and LISA2 antenna pattern functions in the Solar System Barycenter
+        Return the LISA1 and LISA2 antenna pattern functions in the Solar System Barycenter. The computation is based on arXiv:gr-qc/9703068.
         
         Parameters
         ----------
@@ -99,6 +102,8 @@ class LISALowFrequencyInterferometer(object):
             Source's polar angle. 
         phi_s : float
             Source's azimuthal angle.
+        psi : float
+            Source's polarization angle.
         t_ref : float
             Reference time.
         mode : str
@@ -119,7 +124,7 @@ class LISALowFrequencyInterferometer(object):
                     np.sqrt(3.0) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * (np.cos(theta_s) * np.sin(theta_l) * np.cos(phi_l) - np.cos(theta_l) * np.sin(theta_s) * np.cos(phi_s))
         
         psi = np.arctan2(psiup, psidown)'''
-        psi = self.get_psi(theta_s, phi_s, theta_l, phi_l, t_ref)
+        #costheta, phi, psi = self.detector_to_ecliptic(theta_s, phi_s, theta_l, phi_l, t_ref)
         
         if self.name =='LISA1':
             if mode =='plus':
