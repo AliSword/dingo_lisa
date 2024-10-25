@@ -57,39 +57,6 @@ class LISALowFrequencyInterferometer(object):
         """
         
         self.name = name 
-    
-   ''' def detector_to_ecliptic(self, theta_s, phi_s, theta_l, phi_l, t_ref):
-        """
-        Compute sky location and polarization in the SSB frame. Based on arXiv:gr-qc/9703068.
-
-        Parameters
-        ----------
-        theta_s : float
-            Source's polar angle. 
-        phi_s : float
-            Source's azimuthal angle.
-        theta_l : float
-            Polar angle of the source's angular momentum.
-        phi_l : float
-            Azimuthal angle of the source's angular momentum.
-        t_ref : float
-            Reference time.
-        """
-        costheta = 0.5 * np.cos(theta_s) - 0.5 * np.sqrt(3.) * np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s)
-        
-        phi = LISALowFrequencyInterferometer.alpha_0 + LISALowFrequencyInterferometer.omega * t_ref + np.arctan2(np.sqrt(3.) * np.cos(theta_s) + np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s) , 2 * np.sin(theta_s) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s))
-
-        psiup = 0.5 * np.cos(theta_l) - 0.5 * np.sqrt(3.0) * np.sin(theta_l) * np.cos(LISALowFrequencyInterferometer.phi_0 + 
-                    LISALowFrequencyInterferometer.omega * t_ref - phi_l) - costheta * (np.cos(theta_l) * np.cos(theta_s) + np.sin(theta_l) * np.sin(theta_s) * np.cos(phi_l - phi_s))
-        
-        psidown = 0.5 * np.sin(theta_l) * np.sin(theta_s) * np.sin(phi_l - phi_s) - 0.5 * np.sqrt(3.0) * \
-                    np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * \
-                    (np.cos(theta_l) * np.sin(theta_s) * np.sin(phi_s) - np.cos(theta_s) * np.sin(theta_l) * np.sin(phi_l)) - 0.5 * \
-                    np.sqrt(3.0) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * (np.cos(theta_s) * np.sin(theta_l) * np.cos(phi_l) - np.cos(theta_l) * np.sin(theta_s) * np.cos(phi_s))
-
-        psi = np.arctan2(psiup, psidown)
-
-        return costheta, phi, psi'''
 
 
     def antenna_response(self, theta_s, phi_s, psi, t_ref, mode):  
@@ -115,7 +82,7 @@ class LISALowFrequencyInterferometer(object):
         
         phi = LISALowFrequencyInterferometer.alpha_0 + LISALowFrequencyInterferometer.omega * t_ref + np.arctan2(np.sqrt(3.) * np.cos(theta_s) + np.sin(theta_s) * np.cos(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s) , 2 * np.sin(theta_s) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref - phi_s))
         
-        '''psiup = 0.5 * np.cos(theta_l) - 0.5 * np.sqrt(3.0) * np.sin(theta_l) * np.cos(LISALowFrequencyInterferometer.phi_0 + 
+        psiup = 0.5 * np.cos(theta_l) - 0.5 * np.sqrt(3.0) * np.sin(theta_l) * np.cos(LISALowFrequencyInterferometer.phi_0 + 
                     LISALowFrequencyInterferometer.omega * t_ref - phi_l) - costheta * (np.cos(theta_l) * np.cos(theta_s) + np.sin(theta_l) * np.sin(theta_s) * np.cos(phi_l - phi_s))
         
         psidown = 0.5 * np.sin(theta_l) * np.sin(theta_s) * np.sin(phi_l - phi_s) - 0.5 * np.sqrt(3.0) * \
@@ -123,8 +90,7 @@ class LISALowFrequencyInterferometer(object):
                     (np.cos(theta_l) * np.sin(theta_s) * np.sin(phi_s) - np.cos(theta_s) * np.sin(theta_l) * np.sin(phi_l)) - 0.5 * \
                     np.sqrt(3.0) * np.sin(LISALowFrequencyInterferometer.phi_0 + LISALowFrequencyInterferometer.omega * t_ref) * (np.cos(theta_s) * np.sin(theta_l) * np.cos(phi_l) - np.cos(theta_l) * np.sin(theta_s) * np.cos(phi_s))
         
-        psi = np.arctan2(psiup, psidown)'''
-        #costheta, phi, psi = self.detector_to_ecliptic(theta_s, phi_s, theta_l, phi_l, t_ref)
+        psi = np.arctan2(psiup, psidown)
         
         if self.name =='LISA1':
             if mode =='plus':

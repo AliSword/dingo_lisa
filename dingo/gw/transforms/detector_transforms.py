@@ -123,6 +123,34 @@ class GetDetectorTimes(object):
         return sample
 
 
+def GetEclipticAngularMomentum(iota: Union[float, np.array, torch.Tensor],
+                               psi: Union[float, np.array, torch.Tensor],
+                               theta_s: Union[float, np.array, torch.Tensor],
+                               phi_s: Union[float, np.array, torch.Tensor]):
+        """orbital angular momentum orientation (Lhat) as a function of inclination and polarization, given a sky location (Nhat)"""
+    
+        # The construction is:
+        # First, rotate Nhat around (Nhat x zhat) by an angle iota (Inclination)
+        # Second, rotate that vector around Nhat by an angle psi (Polarization)
+        # You get Lhat
+        
+        ci = np.cos(iota)
+        si = np.sqrt(1. - ci * ci)
+        cps = np.cos(psi) 
+        sps = np.sin(psi)
+        sbN = np.sin(theta_s) 
+        cbN = np.sqrt(1. - sbN * sbN)
+        slN = np.sin(phi_s)
+        clN = np.cos(phi_s)
+
+        sbL = np.clamp(ci * sbN + si * cbN * cps, -1., 1.)
+        theta_l = np.arcsin(sbL)
+
+        phi_l = np.arctan2(ci * cbN * slN - si * (sps * clN + sbN * cps * slN),
+                        ci * cbN * clN + si * (sps * slN - sbN * cps * clN))
+        return theta_l, phi_l
+
+
 class ProjectOntoDetectors(object):
     """
     Project the GW polarizations onto the detectors in ifo_list. This does
@@ -172,12 +200,16 @@ class ProjectOntoDetectors(object):
                 d_new = extrinsic_parameters.pop("luminosity_distance")
                 theta_s = extrinsic_parameters.pop("theta_s")
                 phi_s = extrinsic_parameters.pop("phi_s")
-                theta_l = extrinsic_parameters.pop("theta_l")
-                phi_l = extrinsic_parameters.pop("phi_l")
+                psi = extrinsic_parameters.pop("psi")
+                #theta_l = extrinsic_parameters.pop("theta_l")
+                #phi_l = extrinsic_parameters.pop("phi_l")
                 tc_ref = parameters["geocent_time"]
+                theta_jn = parameters["theta_jn"]
+                theta_l, phi_l = GetEclipticAngularMomentum(theta_jn,psi,theta_s, phi_s)
                 assert tc_ref == 0
                 tc_new = extrinsic_parameters.pop("geocent_time")
-                response_vars = [theta_s, phi_s, theta_l, phi_l, self.ref_time]
+                response_vars = [theta_s, phi_s, theta_l, phi_l, self.ref_time] 
+                #ref time should be the time after start of lisa mission
             except KeyError as e:
                 raise ValueError(f"Missing parameter: {e}")
 
@@ -219,8 +251,9 @@ class ProjectOntoDetectors(object):
                 # extrinsic_parameters, so they only live one place. 
                 parameters["theta_s"] = theta_s
                 parameters["phi_s"] = phi_s
-                parameters["theta_l"] = theta_l
-                parameters["phi_l"] = phi_l
+                parameters["psi"] = psi
+                #parameters["theta_l"] = theta_l
+                #parameters["phi_l"] = phi_l
                 parameters["geocent_time"] = tc_new
 
         sample["waveform"] = strains

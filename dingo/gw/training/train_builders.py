@@ -97,7 +97,11 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
     #  the domain_update = wfd.domain.domain_dict contains a window factor, which will
     #  cause an error in domain_update.
     domain = build_domain(wfd.domain.domain_dict)
-    domain.window_factor = get_window_factor(data_settings["window"])
+    ifos = data_settings["detectors"]
+    if ifos in ("LISA1", "LISA2"):
+        domain.window_factor = 1.0
+    else:
+        domain.window_factor = get_window_factor(data_settings["window"])
 
     extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"])
     if data_settings["inference_parameters"] == "default":
@@ -105,15 +109,18 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
 
     ref_time = data_settings["ref_time"]
     # Build detector objects
-    ifos = data_settings["detectors"]
+
     if ifos in ("LISA1", "LISA2"):
         ifo_list = LISAInterferometerList(data_settings["detectors"])
     else:
         ifo_list = InterferometerList(data_settings["detectors"])
 
     # Build transforms.
-    transforms = [SampleExtrinsicParameters(extrinsic_prior_dict),
-                  GetDetectorTimes(ifo_list, ref_time)]
+    if ifos in ("LISA1", "LISA2"):
+        transforms = [SampleExtrinsicParameters(extrinsic_prior_dict)]
+    else:
+        transforms = [SampleExtrinsicParameters(extrinsic_prior_dict),
+                     GetDetectorTimes(ifo_list, ref_time)]
 
     extra_context_parameters = []
     if "gnpe_time_shifts" in data_settings:
@@ -157,8 +164,11 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
         data_settings["standardization"] = standardization_dict
 
     transforms.append(ProjectOntoDetectors(ifo_list, domain, ref_time))
-    transforms.append(SampleNoiseASD(asd_dataset))
-    transforms.append(WhitenAndScaleStrain(domain.noise_std))
+    if ifos in ("LISA1", "LISA2"):
+        transform.append(WhitenAndScaleFixedASD(domain, domain.noise_std, asd_dataset_path, None, None))
+    else:
+        transforms.append(SampleNoiseASD(asd_dataset))
+        transforms.append(WhitenAndScaleStrain(domain.noise_std))
     # We typically add white detector noise. For debugging purposes, this can be turned
     # off with zero_noise option in data_settings.
     if not data_settings.get("zero_noise", False):
