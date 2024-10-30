@@ -150,6 +150,7 @@ class WhitenAndScaleFixedASD(object):
         precision : str ("single", "double")
             If not None, sets precision of ASD to specified precision.
         """
+        
         if asd_file is not None:
             psd = PowerSpectralDensity(asd_file=asd_file)
         else:

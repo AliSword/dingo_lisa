@@ -123,32 +123,43 @@ class GetDetectorTimes(object):
         return sample
 
 
-def GetEclipticAngularMomentum(iota: Union[float, np.array, torch.Tensor],
-                               psi: Union[float, np.array, torch.Tensor],
-                               theta_s: Union[float, np.array, torch.Tensor],
-                               phi_s: Union[float, np.array, torch.Tensor]):
-        """orbital angular momentum orientation (Lhat) as a function of inclination and polarization, given a sky location (Nhat)"""
+def GetEclipticAngularMomentum(iota, theta_s, phi_s, psi):
+    """
+    Calculate direction of the binary angular momentum in the Solar System Barycenter.
+
+    Parameters
+    ----------
+    iota: float
+        Inclination of the source in radians.
+    theta_s: float
+        Ecliptic latitude of the source in radians.
+    phi_s: float
+        Ecliptic longitude of the source in radians.
+    psi: float
+        Polarization of the source in radians.
+
+    Returns
+    -------
+    float: The ecliptic latitude and longitude of the angular momentum.
+    """
+
+    si = np.sin(iota)
+    ci = np.cos(iota)
+    cps = np.cos(2*psi) #we are considering that the GW is symmetrical in psi (psi -> psi + pi).
+    sps = np.sin(2*psi)
+    sths = np.sin(theta_s)
+    cths = np.cos(theta_s)
+    sphs = np.sin(phi_s)
+    cphs = np.cos(phi_s)
+    norm = 1/(np.sqrt(sths**2 * sphs**2 + cths**2))
     
-        # The construction is:
-        # First, rotate Nhat around (Nhat x zhat) by an angle iota (Inclination)
-        # Second, rotate that vector around Nhat by an angle psi (Polarization)
-        # You get Lhat
-        
-        ci = np.cos(iota)
-        si = np.sqrt(1. - ci * ci)
-        cps = np.cos(psi) 
-        sps = np.sin(psi)
-        sbN = np.sin(theta_s) 
-        cbN = np.sqrt(1. - sbN * sbN)
-        slN = np.sin(phi_s)
-        clN = np.cos(phi_s)
+    cthl = norm*(si * cps * sths * sphs - si * sps * cths * sths * cphs) + ci * cths
+    theta_l = np.arccos(cthl)
 
-        sbL = np.clamp(ci * sbN + si * cbN * cps, -1., 1.)
-        theta_l = np.arcsin(sbL)
-
-        phi_l = np.arctan2(ci * cbN * slN - si * (sps * clN + sbN * cps * slN),
-                        ci * cbN * clN + si * (sps * slN - sbN * cps * clN))
-        return theta_l, phi_l
+    phi_l = np.arctan2(norm * (-si * cps * cths - si * sps * sths**2 * cphs * sphs) + ci * sths * sphs,
+                       norm * (si * sps * (sths**2 * sphs**2 + cths**2)) + ci * sths * cphs)
+    phi_l = np.mod(phi_l, 2*np.pi)
+    return theta_l, phi_l
 
 
 class ProjectOntoDetectors(object):
@@ -201,11 +212,9 @@ class ProjectOntoDetectors(object):
                 theta_s = extrinsic_parameters.pop("theta_s")
                 phi_s = extrinsic_parameters.pop("phi_s")
                 psi = extrinsic_parameters.pop("psi")
-                #theta_l = extrinsic_parameters.pop("theta_l")
-                #phi_l = extrinsic_parameters.pop("phi_l")
                 tc_ref = parameters["geocent_time"]
                 theta_jn = parameters["theta_jn"]
-                theta_l, phi_l = GetEclipticAngularMomentum(theta_jn,psi,theta_s, phi_s)
+                theta_l, phi_l = GetEclipticAngularMomentum(theta_jn, theta_s, phi_s, psi)
                 assert tc_ref == 0
                 tc_new = extrinsic_parameters.pop("geocent_time")
                 response_vars = [theta_s, phi_s, theta_l, phi_l, self.ref_time] 
@@ -226,35 +235,38 @@ class ProjectOntoDetectors(object):
             strain = fp * hp + fc * hc
 
             if isinstance(self.ifo_list, InterferometerList):
-                
-                # (3) time shift the strain. If polarizations are timeshifted by
-                #     tc_ref != 0, undo this here by subtracting it from dt.
-                dt = extrinsic_parameters[f"{ifo.name}_time"] - tc_ref
-                strains[ifo.name] = self.domain.time_translate_data(strain, dt)
+                try:
+                    # (3) time shift the strain. If polarizations are timeshifted by
+                    #     tc_ref != 0, undo this here by subtracting it from dt.
+                    dt = extrinsic_parameters[f"{ifo.name}_time"] - tc_ref
+                    strains[ifo.name] = self.domain.time_translate_data(strain, dt)
 
-                # Add extrinsic parameters corresponding to the transformations
-                # applied in the loop above to parameters. These have all been popped off of
-                # extrinsic_parameters, so they only live one place.
-                parameters["ra"] = ra
-                parameters["dec"] = dec
-                parameters["psi"] = psi
-                parameters["geocent_time"] = tc_new
+                    # Add extrinsic parameters corresponding to the transformations
+                    # applied in the loop above to parameters. These have all been popped off of
+                    # extrinsic_parameters, so they only live one place.
+                    parameters["ra"] = ra
+                    parameters["dec"] = dec
+                    parameters["psi"] = psi
+                    parameters["geocent_time"] = tc_new
                 
-                # Add ifo time and popped off it of extrinsic parameters
-                param_name = f"{ifo.name}_time"
-                parameters[param_name] = extrinsic_parameters.pop(param_name)
+                    # Add ifo time and popped off it of extrinsic parameters
+                    param_name = f"{ifo.name}_time"
+                    parameters[param_name] = extrinsic_parameters.pop(param_name)
+                except KeyError:
+                    print(f"Parameter {param_name} not found in extrinsic_parameters for {ifo.name}")
             elif isinstance(self.ifo_list, LISAInterferometerList):
-                strains[ifo.name] = strain 
+                try:
+                    strains[ifo.name] = strain 
                     
-                # Add extrinsic parameters corresponding to the transformations
-                # applied in the loop above to parameters. These have all been popped off of
-                # extrinsic_parameters, so they only live one place. 
-                parameters["theta_s"] = theta_s
-                parameters["phi_s"] = phi_s
-                parameters["psi"] = psi
-                #parameters["theta_l"] = theta_l
-                #parameters["phi_l"] = phi_l
-                parameters["geocent_time"] = tc_new
+                    # Add extrinsic parameters corresponding to the transformations
+                    # applied in the loop above to parameters. These have all been popped off of
+                    # extrinsic_parameters, so they only live one place. 
+                    parameters["theta_s"] = theta_s
+                    parameters["phi_s"] = phi_s
+                    parameters["psi"] = psi
+                    parameters["geocent_time"] = tc_new
+                except KeyError:
+                    print(f"Parameter {param_name} not found in extrinsic_parameters for {ifo.name}")
 
         sample["waveform"] = strains
         sample["parameters"] = parameters

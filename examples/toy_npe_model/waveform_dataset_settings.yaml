@@ -1,7 +1,7 @@
 domain:
   type: FrequencyDomain
   f_min: 1.0e-4
-  f_max: 1.0e-3
+  f_max: 3.0e-3
   delta_f: 1.0e-6  # Expressions like 1.0/8.0 would require eval and are not supported
   
 waveform_generator:
@@ -12,20 +12,20 @@ waveform_generator:
 
 # Dataset only samples over intrinsic parameters. Extrinsic parameters are chosen at train time.
 intrinsic_prior:
-  mass_1: bilby.core.prior.Constraint(minimum=8.0e6, maximum=2.0e7) #5e6,1e7
-  mass_2: bilby.core.prior.Constraint(minimum=8.0e6, maximum=2.0e7)
-  chirp_mass: bilby.gw.prior.UniformInComponentsChirpMass(minimum=1.0e7, maximum=2.0e7) #7e6, 1e7, prima era 5.0e6,1e7
+  mass_1: bilby.core.prior.Constraint(minimum=3.0e6, maximum=8.0e6) #5e6,1e7
+  mass_2: bilby.core.prior.Constraint(minimum=3.0e6, maximum=8.0e6)
+  chirp_mass: bilby.gw.prior.UniformInComponentsChirpMass(minimum=5.0e6, maximum=1.0e7) #7e6, 1e7, prima era 5.0e6,1e7
   mass_ratio: bilby.gw.prior.UniformInComponentsMassRatio(minimum=0.125, maximum=1.0)
   phase: default
   chi_1: bilby.core.prior.Uniform(minimum=0, maximum=0.9)
   chi_2: bilby.core.prior.Uniform(minimum=0, maximum=0.9)
   theta_jn: default
   # Reference values for fixed (extrinsic) parameters. These are needed to generate a waveform.
-  luminosity_distance: 6000.0  # Mpc
+  luminosity_distance: 100.0  # Mpc
   geocent_time: 0.0  # s
 
 # Dataset size
-num_samples: 1000 #5000000
+num_samples: 10000 #5000000
 
 # Save a compressed representation of the dataset
 compression:
