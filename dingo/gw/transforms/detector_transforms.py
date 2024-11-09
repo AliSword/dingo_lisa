@@ -123,45 +123,6 @@ class GetDetectorTimes(object):
         return sample
 
 
-def GetEclipticAngularMomentum(iota, theta_s, phi_s, psi):
-    """
-    Calculate direction of the binary angular momentum in the Solar System Barycenter.
-
-    Parameters
-    ----------
-    iota: float
-        Inclination of the source in radians.
-    theta_s: float
-        Ecliptic latitude of the source in radians.
-    phi_s: float
-        Ecliptic longitude of the source in radians.
-    psi: float
-        Polarization of the source in radians.
-
-    Returns
-    -------
-    float: The ecliptic latitude and longitude of the angular momentum.
-    """
-
-    si = np.sin(iota)
-    ci = np.cos(iota)
-    cps = np.cos(2*psi) #we are considering that the GW is symmetrical in psi (psi -> psi + pi).
-    sps = np.sin(2*psi)
-    sths = np.sin(theta_s)
-    cths = np.cos(theta_s)
-    sphs = np.sin(phi_s)
-    cphs = np.cos(phi_s)
-    norm = 1/(np.sqrt(sths**2 * sphs**2 + cths**2))
-    
-    cthl = norm*(si * cps * sths * sphs - si * sps * cths * sths * cphs) + ci * cths
-    theta_l = np.arccos(cthl)
-
-    phi_l = np.arctan2(norm * (-si * cps * cths - si * sps * sths**2 * cphs * sphs) + ci * sths * sphs,
-                       norm * (si * sps * (sths**2 * sphs**2 + cths**2)) + ci * sths * cphs)
-    phi_l = np.mod(phi_l, 2*np.pi)
-    return theta_l, phi_l
-
-
 class ProjectOntoDetectors(object):
     """
     Project the GW polarizations onto the detectors in ifo_list. This does
@@ -214,7 +175,7 @@ class ProjectOntoDetectors(object):
                 psi = extrinsic_parameters.pop("psi")
                 tc_ref = parameters["geocent_time"]
                 theta_jn = parameters["theta_jn"]
-                theta_l, phi_l = GetEclipticAngularMomentum(theta_jn, theta_s, phi_s, psi)
+                theta_l, phi_l = LISALowFrequencyInterferometer.GetEclipticAngularMomentum(theta_jn, theta_s, phi_s, psi)
                 assert tc_ref == 0
                 tc_new = extrinsic_parameters.pop("geocent_time")
                 response_vars = [theta_s, phi_s, theta_l, phi_l, self.ref_time] 

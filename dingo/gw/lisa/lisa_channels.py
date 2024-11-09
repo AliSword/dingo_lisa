@@ -58,6 +58,45 @@ class LISALowFrequencyInterferometer(object):
         
         self.name = name 
 
+    @staticmethod
+    def GetEclipticAngularMomentum(iota, theta_s, phi_s, psi):
+        """
+        Calculate direction of the binary angular momentum in the Solar System Barycenter.
+
+        Parameters
+        ----------
+        iota: float
+            Inclination of the source in radians.
+        theta_s: float
+            Ecliptic latitude of the source in radians.
+        phi_s: float
+            Ecliptic longitude of the source in radians.
+        psi: float
+            Polarization of the source in radians.
+
+        Returns
+        -------
+        float: The ecliptic latitude and longitude of the angular momentum.
+        """
+
+        si = np.sin(iota)
+        ci = np.cos(iota)
+        cps = np.cos(2*psi) #we are considering that the GW is symmetrical in psi (psi -> psi + pi).
+        sps = np.sin(2*psi)
+        sths = np.sin(theta_s)
+        cths = np.cos(theta_s)
+        sphs = np.sin(phi_s)
+        cphs = np.cos(phi_s)
+        norm = 1/(np.sqrt(sths**2 * sphs**2 + cths**2))
+    
+        cthl = norm*(si * cps * sths * sphs - si * sps * cths * sths * cphs) + ci * cths
+        theta_l = np.arccos(cthl)
+
+        phi_l = np.arctan2(norm * (-si * cps * cths - si * sps * sths**2 * cphs * sphs) + ci * sths * sphs,
+                           norm * (si * sps * (sths**2 * sphs**2 + cths**2)) + ci * sths * cphs)
+        phi_l = np.mod(phi_l, 2*np.pi)
+        return theta_l, phi_l
+
 
     def antenna_response(self, theta_s, phi_s, theta_l, phi_l, t_ref, mode):  
         """
