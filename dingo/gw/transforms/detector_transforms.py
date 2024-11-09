@@ -265,8 +265,15 @@ class ProjectOntoDetectors(object):
                     parameters["phi_s"] = phi_s
                     parameters["psi"] = psi
                     parameters["geocent_time"] = tc_new
-                except KeyError:
-                    print(f"Parameter {param_name} not found in extrinsic_parameters for {ifo.name}")
+
+                    # Add ecliptic angular momentum
+                    parameters["theta_l"] = theta_l
+                except KeyError as e:
+                    print(f"Parameter {e.args[0]} not found for {ifo.name}")
+                try:
+                    parameters["phi_l"] = phi_l
+                except KeyError as e:
+                    print(f"Parameter {e.args[0]} not found for {ifo.name}")
 
         sample["waveform"] = strains
         sample["parameters"] = parameters

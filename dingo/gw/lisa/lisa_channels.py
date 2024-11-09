@@ -70,8 +70,12 @@ class LISALowFrequencyInterferometer(object):
             Ecliptic latitude of the source in radians. 
         phi_s : float
             Ecliptic longitude of the source in radians.
+        theta_l : float
+            Ecliptic latitude of the angular momentum in radians.
+        phi_l : float
+            Ecliptic longitude of the angular momentum in radians.
         psi : float
-            Polarization of the source in radians.
+            Polarization angle of the source in radians.
         t_ref : float
             Reference time.
         mode : str
