@@ -1,7 +1,7 @@
 domain:
   type: FrequencyDomain
   f_min: 1.0e-4
-  f_max: 1.0e-3
+  f_max: 3.0e-3
   delta_f: 1.0e-6  # Expressions like 1.0/8.0 would require eval and are not supported
   
 waveform_generator:
