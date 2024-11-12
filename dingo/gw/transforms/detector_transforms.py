@@ -9,6 +9,7 @@ from bilby.gw.detector import calibration
 from bilby.gw.prior import CalibrationPriorDict
 from bilby.gw.detector import InterferometerList
 from dingo.gw.lisa import LISAInterferometerList
+from dingo.gw.lisa import LISALowFrequencyInterferometer
 
 
 CC = 299792458.0

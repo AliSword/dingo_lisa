@@ -28,6 +28,8 @@ def get_window_factor(window):
     window_kwargs, first build the window."""
     if type(window) == dict:
         window = get_window(window)
+    if window is None:
+        return 1.0
     return np.sum(window**2) / len(window)
 
 

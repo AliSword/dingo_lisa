@@ -7,6 +7,7 @@ from threadpoolctl import threadpool_limits
 from torch.utils.data import DataLoader
 from bilby.gw.detector import InterferometerList
 from dingo.gw.lisa import LISAInterferometerList
+from dingo.gw.lisa import LISALowFrequencyInterferometer
 
 from dingo.gw.SVD import SVDBasis
 
@@ -98,7 +99,8 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
     #  cause an error in domain_update.
     domain = build_domain(wfd.domain.domain_dict)
     ifos = data_settings["detectors"]
-    if ifos in ("LISA1", "LISA2"):
+    print(ifos)
+    if any(detector in ("LISA1", "LISA2") for detector in ifos):
         domain.window_factor = 1.0
     else:
         domain.window_factor = get_window_factor(data_settings["window"])
@@ -110,13 +112,13 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
     ref_time = data_settings["ref_time"]
     # Build detector objects
 
-    if ifos in ("LISA1", "LISA2"):
+    if any(detector in ("LISA1", "LISA2") for detector in ifos):
         ifo_list = LISAInterferometerList(data_settings["detectors"])
     else:
         ifo_list = InterferometerList(data_settings["detectors"])
 
     # Build transforms.
-    if ifos in ("LISA1", "LISA2"):
+    if any(detector in ("LISA1", "LISA2") for detector in ifos):
         transforms = [SampleExtrinsicParameters(extrinsic_prior_dict)]
     else:
         transforms = [SampleExtrinsicParameters(extrinsic_prior_dict),
