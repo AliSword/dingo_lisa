@@ -1,7 +1,7 @@
 domain:
   type: FrequencyDomain
   f_min: 1.0e-4
-  f_max: 1.0e-3
+  f_max: 3.0e-3
   delta_f: 1.0e-6  # Expressions like 1.0/8.0 would require eval and are not supported
   
 waveform_generator:
@@ -25,14 +25,14 @@ intrinsic_prior:
   geocent_time: 0.0  # s
 
 # Dataset size
-num_samples: 10000 #5000000
+num_samples: 5000000 #5000000
 
 # Save a compressed representation of the dataset
 compression:
   svd:
     # Truncate the SVD basis at this size. No truncation if zero.
     size: 200
-    num_training_samples: 5000 #50000
-    num_validation_samples: 1000 #10000
+    num_training_samples: 50000 #50000
+    num_validation_samples: 10000 #10000
   whitening: noise.txt
 
