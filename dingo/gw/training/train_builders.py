@@ -98,6 +98,7 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
     #  the domain_update = wfd.domain.domain_dict contains a window factor, which will
     #  cause an error in domain_update.
     domain = build_domain(wfd.domain.domain_dict)
+    ifos = data_settings["detectors"]
     domain.window_factor = get_window_factor(data_settings["window"])
 
     extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"])
