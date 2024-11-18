@@ -7,7 +7,6 @@ from threadpoolctl import threadpool_limits
 from torch.utils.data import DataLoader
 from bilby.gw.detector import InterferometerList
 from dingo.gw.lisa import LISAInterferometerList
-from dingo.gw.lisa import LISALowFrequencyInterferometer
 
 from dingo.gw.SVD import SVDBasis
 
