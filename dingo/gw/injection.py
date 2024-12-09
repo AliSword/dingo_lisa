@@ -1,5 +1,7 @@
 import numpy as np
 from bilby.gw.detector import InterferometerList
+from dingo.gw.lisa import LISAInterferometerList
+#from dingo.gw.lisa import LISALowFrequencyInterferometer
 from torchvision.transforms import Compose
 
 from dingo.gw.noise.asd_dataset import ASDDataset
@@ -8,12 +10,14 @@ from dingo.gw.domains import (
     build_domain,
     build_domain_from_model_metadata,
 )
+from dingo.gw.prior import default_extrinsic_dict, default_extrinsic_dict_lisa
 from dingo.gw.gwutils import get_extrinsic_prior_dict
 from dingo.gw.prior import build_prior_with_defaults, split_off_extrinsic_parameters
 from dingo.gw.transforms import (
     GetDetectorTimes,
     ProjectOntoDetectors,
     WhitenAndScaleStrain,
+    WhitenAndScaleFixedASD,
     ApplyCalibrationUncertainty,
 )
 from dingo.gw.waveform_generator.waveform_generator import (
@@ -56,6 +60,7 @@ class GWSignal(object):
 
         self._check_domains(wfg_domain, data_domain)
         self.data_domain = data_domain
+        self.ifo_list = ifo_list
 
         # The waveform generator potentially has a larger frequency range than the
         # domain of the trained network / requested injection / etc. This is typically
@@ -71,7 +76,11 @@ class GWSignal(object):
             self.waveform_generator = WaveformGenerator(domain=wfg_domain, **wfg_kwargs)
 
         self.t_ref = t_ref
-        self.ifo_list = InterferometerList(ifo_list)
+        
+        if any(detector in ("LISA1", "LISA2") for detector in ifo_list):
+            self.ifo_list = LISAInterferometerList(ifo_list)
+        else:
+            self.ifo_list = InterferometerList(ifo_list)
 
         # When we set self.whiten, the projection transforms are automatically prepared.
         self._calibration_envelope = None
@@ -124,10 +133,10 @@ class GWSignal(object):
         self._initialize_transform()
 
     def _initialize_transform(self):
-        transforms = [
-            GetDetectorTimes(self.ifo_list, self.t_ref),
-            ProjectOntoDetectors(self.ifo_list, self.data_domain, self.t_ref),
-        ]
+        transforms = []
+        if isinstance(self.ifo_list, InterferometerList):
+            transforms.append(GetDetectorTimes(self.ifo_list, self.t_ref))
+        transforms.append(ProjectOntoDetectors(self.ifo_list, self.data_domain, self.t_ref))
         if self.calibration_marginalization_kwargs:
             transforms.append(
                 ApplyCalibrationUncertainty(
@@ -137,7 +146,10 @@ class GWSignal(object):
                 )
             )
         if self.whiten:
-            transforms.append(WhitenAndScaleStrain(self.data_domain.noise_std))
+            if isinstance(self.ifo_list, LISAInterferometerList): 
+                transforms.append(WhitenAndScaleFixedASD(self.data_domain, self.data_domain.noise_std))
+            elif isinstance(self.ifo_list, InterferometerList): 
+                transforms.append(WhitenAndScaleStrain(self.data_domain, self.data_domain.noise_std))
         self.projection_transforms = Compose(transforms)
 
     def signal(self, theta):
@@ -290,7 +302,7 @@ class Injection(GWSignal):
     Gaussian noise. Output is not whitened.
     """
 
-    def __init__(self, prior, **gwsignal_kwargs):
+    def __init__(self, prior, intrinsic_prior, extrinsic_prior, **gwsignal_kwargs):
         """
         Parameters
         ----------
@@ -301,6 +313,8 @@ class Injection(GWSignal):
         """
         super().__init__(**gwsignal_kwargs)
         self.prior = prior
+        self.intrinsic_prior = intrinsic_prior
+        self.extrinsic_prior = extrinsic_prior
 
     @classmethod
     def from_posterior_model_metadata(cls, metadata):
@@ -314,20 +328,27 @@ class Injection(GWSignal):
             Dict which you can get via PosteriorModel.metadata
         """
         intrinsic_prior = metadata["dataset_settings"]["intrinsic_prior"]
-        extrinsic_prior = get_extrinsic_prior_dict(
-            metadata["train_settings"]["data"]["extrinsic_prior"]
-        )
+        ifo_list = metadata["train_settings"]["data"]["detectors"]
+        if any(detector in ("LISA1", "LISA2") for detector in ifo_list):
+            extrinsic_prior = get_extrinsic_prior_dict(
+                                                       metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict_lisa
+            )
+        else:
+            extrinsic_prior = get_extrinsic_prior_dict(
+                                                       metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict
+            )
         prior = build_prior_with_defaults({**intrinsic_prior, **extrinsic_prior})
 
         return cls(
             prior=prior,
+            intrinsic_prior=intrinsic_prior,
+            extrinsic_prior=extrinsic_prior,
             wfg_kwargs=metadata["dataset_settings"]["waveform_generator"],
             wfg_domain=build_domain(metadata["dataset_settings"]["domain"]),
             data_domain=build_domain_from_model_metadata(metadata),
             ifo_list=metadata["train_settings"]["data"]["detectors"],
             t_ref=metadata["train_settings"]["data"]["ref_time"],
         )
-
     def injection(self, theta):
         """
         Generate an injection based on specified parameters.

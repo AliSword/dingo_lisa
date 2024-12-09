@@ -267,6 +267,8 @@ class Result(DingoDataset):
             for k, v in self.prior.items()
             if not isinstance(v, (Constraint, DeltaFunction))
         ]
+        #print('not fixed', param_keys_non_fixed)
+        #print(self.prior.items())
         theta_non_fixed = self.samples[param_keys_non_fixed]
         log_prior = self.prior.ln_prob(theta_non_fixed, axis=0)
 
@@ -274,8 +276,11 @@ class Result(DingoDataset):
         # proxies are also stored in self.samples, but are not needed for the likelihood.
         # For evaluating the likelihood, we want to keep the fixed parameters.
         # TODO: replace by self.metadata["train_settings"]["data"]["inference_parameters"]
+        #param_keys = self.metadata["train_settings"]["data"]["inference_parameters"]
         param_keys = [k for k, v in self.prior.items() if not isinstance(v, Constraint)]
+        #print(param_keys)
         theta = self.samples[param_keys]
+        #print(theta)
 
         # The prior or delta_log_prob_target may be -inf for certain samples.
         # For these, we do not want to evaluate the likelihood, in particular because
@@ -286,6 +291,7 @@ class Result(DingoDataset):
 
         print(f"Calculating {len(theta)} likelihoods.")
         t0 = time.time()
+        #print(theta)
         log_likelihood = self.likelihood.log_likelihood_multi(
             theta, num_processes=num_processes
         )
@@ -633,7 +639,6 @@ class Result(DingoDataset):
             theta = theta[parameters]
         if truths is not None:
             kwargs["truths"] = [truths.get(k) for k in theta.columns]
-
         if weights is not None:
             plot_corner_multi(
                 [theta, theta],

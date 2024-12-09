@@ -7,6 +7,7 @@ from threadpoolctl import threadpool_limits
 from torch.utils.data import DataLoader
 from bilby.gw.detector import InterferometerList
 from dingo.gw.lisa import LISAInterferometerList
+from dingo.gw.prior import default_extrinsic_dict, default_extrinsic_dict_lisa
 
 from dingo.gw.SVD import SVDBasis
 
@@ -100,24 +101,28 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
     ifos = data_settings["detectors"]
     domain.window_factor = get_window_factor(data_settings["window"])
 
-    extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"])
-    if data_settings["inference_parameters"] == "default":
-        data_settings["inference_parameters"] = default_inference_parameters
-
-    ref_time = data_settings["ref_time"]
-    # Build detector objects
-
     if any(detector in ("LISA1", "LISA2") for detector in ifos):
+        extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"], default_extrinsic_dict_lisa)
+        if data_settings["inference_parameters"] == "default":
+            data_settings["inference_parameters"] = default_inference_parameters
+
+        ref_time = data_settings["ref_time"]
+        # Build detector objects
         ifo_list = LISAInterferometerList(data_settings["detectors"])
-    else:
-        ifo_list = InterferometerList(data_settings["detectors"])
-
-    # Build transforms.
-    if any(detector in ("LISA1", "LISA2") for detector in ifos):
+        # Build transforms
         transforms = [SampleExtrinsicParameters(extrinsic_prior_dict)]
     else:
+        extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"], default_extrinsic_dict)
+        if data_settings["inference_parameters"] == "default":
+            data_settings["inference_parameters"] = default_inference_parameters
+
+        ref_time = data_settings["ref_time"]
+        # Build detector objects
+        ifo_list = InterferometerList(data_settings["detectors"])
+        # Build transforms
         transforms = [SampleExtrinsicParameters(extrinsic_prior_dict),
                      GetDetectorTimes(ifo_list, ref_time)]
+
 
     extra_context_parameters = []
     if "gnpe_time_shifts" in data_settings:

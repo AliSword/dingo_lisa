@@ -110,6 +110,14 @@ default_extrinsic_dict = {
     "luminosity_distance": "bilby.core.prior.Uniform(minimum=100.0, maximum=6000.0)",
 }
 
+default_extrinsic_dict_lisa = {
+    "theta_s": "bilby.core.prior.Cosine(minimum=-np.pi/2, maximum=np.pi/2)",
+    "phi_s": 'bilby.core.prior.Uniform(minimum=0., maximum=2*np.pi, boundary="periodic")',
+    "geocent_time": "bilby.core.prior.Uniform(minimum=-0.1, maximum=0.1)",
+    "psi": 'bilby.core.prior.Uniform(minimum=0.0, maximum=np.pi, boundary="periodic")',
+    "luminosity_distance": "bilby.core.prior.Uniform(minimum=100.0, maximum=6000.0)",
+}
+
 default_intrinsic_dict = {
     "mass_1": "bilby.core.prior.Constraint(minimum=10.0, maximum=80.0)",
     "mass_2": "bilby.core.prior.Constraint(minimum=10.0, maximum=80.0)",
