@@ -1,7 +1,6 @@
 import numpy as np
 from bilby.gw.detector import InterferometerList
 from dingo.gw.lisa import LISAInterferometerList
-#from dingo.gw.lisa import LISALowFrequencyInterferometer
 from torchvision.transforms import Compose
 
 from dingo.gw.noise.asd_dataset import ASDDataset
