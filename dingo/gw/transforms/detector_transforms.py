@@ -179,7 +179,6 @@ class ProjectOntoDetectors(object):
                 assert tc_ref == 0
                 tc_new = extrinsic_parameters.pop("geocent_time")
                 response_vars = [theta_s, phi_s, theta_l, phi_l, self.ref_time] 
-                #ref time should be the time after start of lisa mission
             except KeyError as e:
                 raise ValueError(f"Missing parameter: {e}")
 
