@@ -59,7 +59,7 @@ class GWSignal(object):
 
         self._check_domains(wfg_domain, data_domain)
         self.data_domain = data_domain
-        self.ifo_list = ifo_list
+        #self.ifo_list = ifo_list
 
         # The waveform generator potentially has a larger frequency range than the
         # domain of the trained network / requested injection / etc. This is typically
@@ -76,7 +76,10 @@ class GWSignal(object):
 
         self.t_ref = t_ref
         
-        if any(detector in ("LISA1", "LISA2") for detector in ifo_list):
+        detector_names = [
+            getattr(detector, "name", detector) for detector in ifo_list
+        ]
+        if any(detector in ("LISA1", "LISA2") for detector in detector_names):
             self.ifo_list = LISAInterferometerList(ifo_list)
         else:
             self.ifo_list = InterferometerList(ifo_list)
