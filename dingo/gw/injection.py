@@ -136,8 +136,8 @@ class GWSignal(object):
 
     def _initialize_transform(self):
         transforms = []
-        if isinstance(self.ifo_list, InterferometerList):
-            transforms.append(GetDetectorTimes(self.ifo_list, self.t_ref))
+        #if isinstance(self.ifo_list, InterferometerList):
+         #   transforms.append(GetDetectorTimes(self.ifo_list, self.t_ref))
         transforms.append(ProjectOntoDetectors(self.ifo_list, self.data_domain, self.t_ref))
         if self.calibration_marginalization_kwargs:
             transforms.append(
@@ -149,7 +149,7 @@ class GWSignal(object):
             )
         if self.whiten:
             if isinstance(self.ifo_list, LISAInterferometerList): 
-                transforms.append(WhitenAndScaleFixedASD(self.data_domain, self.data_domain.noise_std))
+                transforms.append(WhitenAndScaleFixedASD(self.data_domain, self.data_domain.noise_std, './noise.txt'))
             elif isinstance(self.ifo_list, InterferometerList): 
                 transforms.append(WhitenAndScaleStrain(self.data_domain, self.data_domain.noise_std))
         self.projection_transforms = Compose(transforms)
@@ -179,6 +179,8 @@ class GWSignal(object):
         """
         theta_intrinsic, theta_extrinsic = split_off_extrinsic_parameters(theta)
         theta_intrinsic = {k: float(v) for k, v in theta_intrinsic.items()}
+        print('theta_int', theta_intrinsic.items())
+        print('theta_ext', theta_extrinsic.items())
 
         # Step 1: generate polarizations h_plus and h_cross
         polarizations = self.waveform_generator.generate_hplus_hcross(theta_intrinsic)
@@ -192,8 +194,10 @@ class GWSignal(object):
             "extrinsic_parameters": theta_extrinsic,
             "waveform": polarizations,
         }
-
+        print('sample_ext', sample['extrinsic_parameters'])
         asd = self.asd
+        if asd is None:
+            print('ciao')
         if asd is not None:
             sample["asds"] = asd
 
@@ -278,8 +282,9 @@ class GWSignal(object):
         else:
             raise TypeError("Invalid ASD type.")
         asd = {
-            k: self.data_domain.update_data(v, low_value=1e-20) for k, v in asd.items()
+            k: self.data_domain.update_data(v, low_value=np.inf) for k, v in asd.items()
         }
+        print('asd ciao:')
         return asd
 
     @asd.setter
@@ -376,6 +381,7 @@ class Injection(GWSignal):
                 asd (if set): amplitude spectral density for each detector
         """
         signal = self.signal(theta)
+        print('sig', signal)
         try:
             # Be careful to use the ASD included with the signal, since each time
             # self.asd is accessed it gives a different ASD (if using an ASD dataset).

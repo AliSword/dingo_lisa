@@ -188,13 +188,13 @@ class GWSampler(GWSamplerMixin, Sampler):
         #   * whiten and scale strain (since the inference network expects standardized
         #   data)
         #   * repackage strains and asds from dicts to an array
-        #   * convert array to torch tensor on the correct device
+        #   * convert array to torch tensor on the correct dezzvice
         #   * extract only strain/waveform from the sample
         self.transform_pre = Compose(
             [
                 #WhitenAndScaleStrain(self.domain.noise_std),
                 # TO DO: Fix it for choosing btw ligo/lisa
-                WhitenAndScaleFixedASD(self.domain, self.domain.noise_std),
+                WhitenAndScaleFixedASD(self.domain, self.domain.noise_std, './noise.txt', None, None), 
                 # Use base metadata so that unconditional samplers still know how to
                 # transform data, since this transform is used by the GNPE sampler as
                 # well.
