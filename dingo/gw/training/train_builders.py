@@ -166,11 +166,8 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
         data_settings["standardization"] = standardization_dict
 
     transforms.append(ProjectOntoDetectors(ifo_list, domain, ref_time))
-    if ifos in ("LISA1", "LISA2"):
-        transform.append(WhitenAndScaleFixedASD(domain, domain.noise_std, asd_dataset_path, None, None))
-    else:
-        transforms.append(SampleNoiseASD(asd_dataset))
-        transforms.append(WhitenAndScaleStrain(domain.noise_std))
+    transforms.append(SampleNoiseASD(asd_dataset))
+    transforms.append(WhitenAndScaleStrain(domain.noise_std))
     # We typically add white detector noise. For debugging purposes, this can be turned
     # off with zero_noise option in data_settings.
     if not data_settings.get("zero_noise", False):
