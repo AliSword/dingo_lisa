@@ -10,6 +10,7 @@ from dingo.core.density import (
     interpolated_sample_and_log_prob_multi,
     interpolated_log_prob_multi,
 )
+from dingo.gw.prior import default_extrinsic_dict, default_extrinsic_dict_lisa
 from dingo.core.multiprocessing import apply_func_with_multiprocessing
 from dingo.core.result import Result as CoreResult
 from dingo.gw.conversion import change_spin_conversion_phase
@@ -179,10 +180,16 @@ class Result(CoreResult):
 
     def _build_prior(self):
         """Build the prior based on model metadata. Called by __init__()."""
+        ifo_list = self.metadata["train_settings"]["data"]["detectors"]
         intrinsic_prior = self.base_metadata["dataset_settings"]["intrinsic_prior"]
-        extrinsic_prior = get_extrinsic_prior_dict(
-            self.base_metadata["train_settings"]["data"]["extrinsic_prior"]
-        )
+        if any(detector in ("LISA1", "LISA2") for detector in ifo_list):
+            extrinsic_prior = get_extrinsic_prior_dict(
+                                                       self.metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict_lisa
+            )
+        else:
+            extrinsic_prior = get_extrinsic_prior_dict(
+                                                       self.metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict
+            )
         self.prior = build_prior_with_defaults({**intrinsic_prior, **extrinsic_prior})
 
         prior_update = self.importance_sampling_metadata.get("prior_update")
@@ -598,3 +605,4 @@ class Result(CoreResult):
                 except AttributeError:
                     continue
         return prior
+

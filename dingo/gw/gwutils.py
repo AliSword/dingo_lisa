@@ -28,6 +28,8 @@ def get_window_factor(window):
     window_kwargs, first build the window."""
     if type(window) == dict:
         window = get_window(window)
+    if window is None:
+        return 1.0
     return np.sum(window**2) / len(window)
 
 
@@ -37,6 +39,18 @@ def get_extrinsic_prior_dict(extrinsic_prior):
     extrinsic_prior is not default.
     TODO: Move to dingo.gw.prior.py?"""
     extrinsic_prior_dict = default_extrinsic_dict.copy()
+    for k, v in extrinsic_prior.items():
+        if v.lower() != "default":
+            extrinsic_prior_dict[k] = v
+    return extrinsic_prior_dict
+
+
+def get_extrinsic_prior_dict_lisa(extrinsic_prior):
+    """Build dict for extrinsic prior by starting with
+    default_extrinsic_dict, and overwriting every element for which
+    extrinsic_prior is not default.
+    TODO: Move to dingo.gw.prior.py?"""
+    extrinsic_prior_dict = default_extrinsic_dict_lisa.copy()
     for k, v in extrinsic_prior.items():
         if v.lower() != "default":
             extrinsic_prior_dict[k] = v

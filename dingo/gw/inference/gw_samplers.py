@@ -7,6 +7,8 @@ from bilby.core.prior import PriorDict, DeltaFunction
 from bilby.gw.detector import InterferometerList
 from torchvision.transforms import Compose
 
+
+from dingo.gw.prior import default_extrinsic_dict, default_extrinsic_dict_lisa
 from dingo.core.samplers import Sampler, GNPESampler
 from dingo.core.transforms import GetItem, RenameKey
 from dingo.gw.domains import build_domain
@@ -15,6 +17,7 @@ from dingo.gw.prior import build_prior_with_defaults
 from dingo.gw.result import Result
 from dingo.gw.transforms import (
     WhitenAndScaleStrain,
+    WhitenAndScaleFixedASD,
     RepackageStrainsAndASDS,
     ToTorch,
     SelectStandardizeRepackageParameters,
@@ -88,7 +91,7 @@ class GWSamplerMixin(object):
         #  position, it does not do anything.
         if self.event_metadata is not None:
             t_event = self.event_metadata.get("time_event")
-            if t_event is not None and t_event != self.t_ref:
+            '''if t_event is not None and t_event != self.t_ref:
                 ra = samples["ra"]
                 time_reference = Time(self.t_ref, format="gps", scale="utc")
                 time_event = Time(t_event, format="gps", scale="utc")
@@ -101,7 +104,7 @@ class GWSamplerMixin(object):
                 if not inverse:
                     samples["ra"] = (ra + ra_correction) % (2 * np.pi)
                 else:
-                    samples["ra"] = (ra - ra_correction) % (2 * np.pi)
+                    samples["ra"] = (ra - ra_correction) % (2 * np.pi)'''
 
     def _post_process(self, samples: Union[dict, pd.DataFrame], inverse: bool = False):
         """
@@ -121,9 +124,15 @@ class GWSamplerMixin(object):
         """
         # Add fixed parameters from prior
         intrinsic_prior = self.metadata["dataset_settings"]["intrinsic_prior"]
-        extrinsic_prior = get_extrinsic_prior_dict(
-            self.metadata["train_settings"]["data"]["extrinsic_prior"]
-        )
+        ifo_list = self.metadata["train_settings"]["data"]["detectors"]
+        if any(detector in ("LISA1", "LISA2") for detector in ifo_list):
+            extrinsic_prior = get_extrinsic_prior_dict(
+                                                       self.metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict_lisa
+            )
+        else:
+            extrinsic_prior = get_extrinsic_prior_dict(
+                                                       self.metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict
+            )
         prior = build_prior_with_defaults({**intrinsic_prior, **extrinsic_prior})
         num_samples = len(samples[list(samples.keys())[0]])
         for k, p in prior.items():
@@ -257,6 +266,7 @@ class GWSamplerGNPE(GWSamplerMixin, GNPESampler):
         Builds the transforms that are used in the GNPE loop.
         """
         data_settings = self.metadata["train_settings"]["data"]
+        #TO DO: add LISA interferometer
         ifo_list = InterferometerList(data_settings["detectors"])
 
         gnpe_time_settings = data_settings.get("gnpe_time_shifts")
