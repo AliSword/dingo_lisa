@@ -119,6 +119,78 @@ class WhitenFixedASD(object):
                 result[k] = v / self.asd_array
         return result
 
+class WhitenAndScaleFixedASD(object):
+    """
+    Whiten frequency-series data according to a fixed ASD and scale it
+    by a specified scale factor.
+    """
+
+    def __init__(
+        self,
+        domain: FrequencyDomain,
+        scale_factor,
+        asd_file: str = None,
+        inverse: bool = False,
+        precision=None,
+    ):
+        """
+        Parameters
+        ----------
+        domain : FrequencyDomain
+            ASD is interpolated to the associated frequency grid.
+        asd_file : str
+            Name of the ASD file. If None, use the aligo ASD.
+            [Default: None]
+        scale_factor : float
+            Factor to scale the whitened strain data.
+            [Default: 1.0]
+        inverse : bool
+            Whether to apply the inverse whitening transform, to un-whiten data.
+            [Default: False]
+        precision : str ("single", "double")
+            If not None, sets precision of ASD to specified precision.
+        """
+        
+        if asd_file is not None:
+            psd = PowerSpectralDensity(asd_file=asd_file)
+        else:
+            psd = PowerSpectralDensity.from_aligo()
+
+        if psd.frequency_array[-1] < domain.f_max:
+            raise ValueError(
+                f"ASD in {asd_file} has f_max={psd.frequency_array[-1]}, "
+                f"which is lower than domain f_max={domain.f_max}."
+            )
+        asd_interp = interp1d(
+            psd.frequency_array, psd.asd_array, bounds_error=False, fill_value=np.inf
+        )
+        self.asd_array = asd_interp(domain.sample_frequencies)
+        self.asd_array = domain.update_data(self.asd_array, low_value=np.inf)
+
+        if precision is not None:
+            if precision == "single":
+                self.asd_array = self.asd_array.astype(np.float32)
+            elif precision == "double":
+                self.asd_array = self.asd_array.astype(np.float64)
+            else:
+                raise TypeError(
+                    'precision can only be changed to "single" or "double".'
+                )
+
+        self.scale_factor = scale_factor
+        self.inverse = inverse
+
+    def __call__(self, input_sample):
+        sample = input_sample.copy()
+        ifos = sample["waveform"].keys()
+        
+        whitened_strains = {
+            ifo: sample["waveform"][ifo] / (self.asd_array * self.scale_factor)
+            for ifo in ifos
+        }
+        sample["waveform"] = whitened_strains
+        return sample
+
 
 class WhitenAndScaleStrain(object):
     """
