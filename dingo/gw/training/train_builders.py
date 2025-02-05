@@ -6,6 +6,8 @@ import torchvision
 from threadpoolctl import threadpool_limits
 from torch.utils.data import DataLoader
 from bilby.gw.detector import InterferometerList
+from dingo.gw.lisa import LISAInterferometerList
+from dingo.gw.prior import default_extrinsic_dict, default_extrinsic_dict_lisa
 
 from dingo.gw.SVD import SVDBasis
 
@@ -96,19 +98,31 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
     #  the domain_update = wfd.domain.domain_dict contains a window factor, which will
     #  cause an error in domain_update.
     domain = build_domain(wfd.domain.domain_dict)
+    ifos = data_settings["detectors"]
     domain.window_factor = get_window_factor(data_settings["window"])
 
-    extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"])
-    if data_settings["inference_parameters"] == "default":
-        data_settings["inference_parameters"] = default_inference_parameters
+    if any(detector in ("LISA1", "LISA2") for detector in ifos):
+        extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"], default_extrinsic_dict_lisa)
+        if data_settings["inference_parameters"] == "default":
+            data_settings["inference_parameters"] = default_inference_parameters
 
-    ref_time = data_settings["ref_time"]
-    # Build detector objects
-    ifo_list = InterferometerList(data_settings["detectors"])
+        ref_time = data_settings["ref_time"]
+        # Build detector objects
+        ifo_list = LISAInterferometerList(data_settings["detectors"])
+        # Build transforms
+        transforms = [SampleExtrinsicParameters(extrinsic_prior_dict)]
+    else:
+        extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"], default_extrinsic_dict)
+        if data_settings["inference_parameters"] == "default":
+            data_settings["inference_parameters"] = default_inference_parameters
 
-    # Build transforms.
-    transforms = [SampleExtrinsicParameters(extrinsic_prior_dict),
-                  GetDetectorTimes(ifo_list, ref_time)]
+        ref_time = data_settings["ref_time"]
+        # Build detector objects
+        ifo_list = InterferometerList(data_settings["detectors"])
+        # Build transforms
+        transforms = [SampleExtrinsicParameters(extrinsic_prior_dict),
+                     GetDetectorTimes(ifo_list, ref_time)]
+
 
     extra_context_parameters = []
     if "gnpe_time_shifts" in data_settings:
@@ -152,8 +166,11 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
         data_settings["standardization"] = standardization_dict
 
     transforms.append(ProjectOntoDetectors(ifo_list, domain, ref_time))
-    transforms.append(SampleNoiseASD(asd_dataset))
-    transforms.append(WhitenAndScaleStrain(domain.noise_std))
+    if ifos in ("LISA1", "LISA2"):
+        transform.append(WhitenAndScaleFixedASD(domain, domain.noise_std, asd_dataset_path, None, None))
+    else:
+        transforms.append(SampleNoiseASD(asd_dataset))
+        transforms.append(WhitenAndScaleStrain(domain.noise_std))
     # We typically add white detector noise. For debugging purposes, this can be turned
     # off with zero_noise option in data_settings.
     if not data_settings.get("zero_noise", False):
