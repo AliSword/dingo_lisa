@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt 
+
 from bilby.gw.detector import InterferometerList
 from dingo.gw.lisa import LISAInterferometerList
 from torchvision.transforms import Compose
@@ -295,7 +297,7 @@ class Injection(GWSignal):
     Gaussian noise. Output is not whitened.
     """
 
-    def __init__(self, prior,  intrinsic_prior, extrinsic_prior, **gwsignal_kwargs):
+    def __init__(self, prior, **gwsignal_kwargs):
         """
         Parameters
         ----------
@@ -306,8 +308,6 @@ class Injection(GWSignal):
         """
         super().__init__(**gwsignal_kwargs)
         self.prior = prior
-        self.intrinsic_prior = intrinsic_prior
-        self.extrinsic_prior = extrinsic_prior
 
     @classmethod
     def from_posterior_model_metadata(cls, metadata):
@@ -322,20 +322,19 @@ class Injection(GWSignal):
         """
         intrinsic_prior = metadata["dataset_settings"]["intrinsic_prior"]
         ifo_list = metadata["train_settings"]["data"]["detectors"]
-        if any(detector in ("LISA1", "LISA2") for detector in ifo_list):
-            extrinsic_prior = get_extrinsic_prior_dict(
-                                                       metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict_lisa
-            )
-        else:
-            extrinsic_prior = get_extrinsic_prior_dict(
-                                                       metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict
-            )
+        default_extrinsic_dict = (
+            default_extrinsic_dict_lisa if any(det in ("LISA1", "LISA2") for det in ifo_list)
+            else default_extrinsic_dict
+        )
+
+        extrinsic_prior = get_extrinsic_prior_dict(
+            metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict
+        )
+
         prior = build_prior_with_defaults({**intrinsic_prior, **extrinsic_prior})
 
         return cls(
             prior=prior,
-            intrinsic_prior=intrinsic_prior,
-            extrinsic_prior=extrinsic_prior,
             wfg_kwargs=metadata["dataset_settings"]["waveform_generator"],
             wfg_domain=build_domain(metadata["dataset_settings"]["domain"]),
             data_domain=build_domain_from_model_metadata(metadata),
@@ -380,16 +379,36 @@ class Injection(GWSignal):
             self.whiten = False
 
         data = {}
+        freq = []
         for ifo, s in signal["waveform"].items():
             noise = (
                 (np.random.randn(len(s)) + 1j * np.random.randn(len(s)))
                 * asd[ifo]
                 * self.data_domain.noise_std
             )
+
+            #print('noise std:', self.data_domain.noise_std)
+            #print('noise:', noise)
+            #print('asd:', asd[ifo])
             d = s + noise
             data[ifo] = self.data_domain.update_data(d, low_value=0.0)
+            freq = self.data_domain.sample_frequencies
+            #print(len(noise))
+            #print(len(freq))
+
+            '''plt.figure(figsize=(10, 6))
+            
+            plt.loglog(freq, np.abs(noise), label=f'Noise - {ifo}')
+    
+            plt.xlabel('Frequenza [Hz]')
+            plt.ylabel('Rumore [1/sqrt(Hz)]')
+            plt.legend()
+            plt.grid(True)
+            plt.show()'''
+            
 
         signal["waveform"] = data
+
         return signal
 
     def random_injection(self):

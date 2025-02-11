@@ -182,14 +182,15 @@ class Result(CoreResult):
         """Build the prior based on model metadata. Called by __init__()."""
         ifo_list = self.metadata["train_settings"]["data"]["detectors"]
         intrinsic_prior = self.base_metadata["dataset_settings"]["intrinsic_prior"]
-        if any(detector in ("LISA1", "LISA2") for detector in ifo_list):
-            extrinsic_prior = get_extrinsic_prior_dict(
-                                                       self.metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict_lisa
-            )
-        else:
-            extrinsic_prior = get_extrinsic_prior_dict(
-                                                       self.metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict
-            )
+        default_extrinsic_dict = (
+            default_extrinsic_dict_lisa if any(det in ("LISA1", "LISA2") for det in ifo_list)
+            else default_extrinsic_dict
+        )
+
+        extrinsic_prior = get_extrinsic_prior_dict(
+            self.metadata["train_settings"]["data"]["extrinsic_prior"], default_extrinsic_dict
+        )
+
         self.prior = build_prior_with_defaults({**intrinsic_prior, **extrinsic_prior})
 
         prior_update = self.importance_sampling_metadata.get("prior_update")
