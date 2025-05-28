@@ -107,6 +107,7 @@ class FrequencyDomain(Domain):
         self._sample_frequencies_torch_cuda = None
         self._frequency_mask = None
 
+
     def update(self, new_settings: dict):
         """
         Update the domain with new settings. This is only allowed if the new settings

@@ -158,8 +158,8 @@ class ContinuousFlowPosteriorModel(BasePosteriorModel):
             lambda t, theta_t: self.evaluate_vector_field(t, theta_t, *context),
             theta_0,
             self.integration_range,
-            atol=1e-7,
-            rtol=1e-7,
+            atol=1e-4,
+            rtol=1e-4,
             method="dopri5",
         )
 
@@ -208,8 +208,8 @@ class ContinuousFlowPosteriorModel(BasePosteriorModel):
             torch.flip(
                 self.integration_range, dims=(0,)
             ),  # integrate backwards in time, [1-eps, 0]
-            atol=1e-7,
-            rtol=1e-7,
+            atol=1e-3,
+            rtol=1e-3,
             options={"norm": norm_without_divergence_component},
             method="dopri5",
         )
@@ -258,8 +258,8 @@ class ContinuousFlowPosteriorModel(BasePosteriorModel):
             ),
             theta_and_div_init,
             self.integration_range,  # integrate forwards in time, [0, 1-eps]
-            atol=1e-7,
-            rtol=1e-7,
+            atol=1e-2,
+            rtol=1e-2,
             method="dopri5",
             options={"norm": norm_without_divergence_component},
         )

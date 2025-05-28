@@ -164,6 +164,7 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
             torchvision.transforms.Compose(transforms),
         )
         data_settings["standardization"] = standardization_dict
+        print('parameters', wfd.parameters)
 
     transforms.append(ProjectOntoDetectors(ifo_list, domain, ref_time))
     transforms.append(SampleNoiseASD(asd_dataset))
@@ -197,6 +198,7 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
         transforms = [t for t in transforms if type(t) not in omit_transforms]
 
     wfd.transform = torchvision.transforms.Compose(transforms)
+    wfd.to_file('/dingo_lisa/examples/lisa/new_runs/training_data_test_projections/waveform_dataset.hdf5')
 
 
 def build_svd_for_embedding_network(

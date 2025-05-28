@@ -91,7 +91,7 @@ class GWSamplerMixin(object):
         #  position, it does not do anything.
         if self.event_metadata is not None:
             t_event = self.event_metadata.get("time_event")
-            '''if t_event is not None and t_event != self.t_ref:
+            if t_event is not None and t_event != self.t_ref:
                 ra = samples["ra"]
                 time_reference = Time(self.t_ref, format="gps", scale="utc")
                 time_event = Time(t_event, format="gps", scale="utc")
@@ -104,7 +104,7 @@ class GWSamplerMixin(object):
                 if not inverse:
                     samples["ra"] = (ra + ra_correction) % (2 * np.pi)
                 else:
-                    samples["ra"] = (ra - ra_correction) % (2 * np.pi)'''
+                    samples["ra"] = (ra - ra_correction) % (2 * np.pi)
 
     def _post_process(self, samples: Union[dict, pd.DataFrame], inverse: bool = False):
         """

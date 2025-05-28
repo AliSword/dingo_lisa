@@ -172,6 +172,8 @@ class ProjectOntoDetectors(object):
                 d_new = extrinsic_parameters.pop("luminosity_distance")
                 theta_s = extrinsic_parameters.pop("theta_s")
                 phi_s = extrinsic_parameters.pop("phi_s")
+                #theta_l = extrinsic_parameters.pop("theta_l")
+                #phi_l = extrinsic_parameters.pop("phi_l")
                 psi = extrinsic_parameters.pop("psi")
                 tc_ref = parameters["geocent_time"]
                 theta_jn = parameters["theta_jn"]

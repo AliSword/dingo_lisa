@@ -45,6 +45,7 @@ def recursive_hdf5_load(group, keys=None):
                 # of strings.
                 elif d[k].ndim == 1 and d[k].dtype == "O":
                     d[k] = [x.decode() for x in d[k]]
+
     return d
 
 
@@ -119,6 +120,7 @@ class DingoDataset:
                 self.settings = ast.literal_eval(f.attrs["settings"])
             except KeyError:
                 self.settings = None  # Is this necessary?
+        print('File loaded')
 
     def to_dictionary(self):
         dictionary = {

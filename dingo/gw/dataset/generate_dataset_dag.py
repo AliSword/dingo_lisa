@@ -119,6 +119,7 @@ def configure_runs(settings, num_jobs, temp_dir):
             )
             settings_svd_part["num_samples"] = num_samples // num_jobs
             del settings_svd_part["compression"]["svd"]
+
             with open(os.path.join(temp_dir, settings_svd_part_fn), "w") as f:
                 yaml.dump(
                     settings_svd_part, f, default_flow_style=False, sort_keys=False
@@ -168,7 +169,7 @@ def create_dag(args, settings):
             # --- (a) Generate dataset for SVD training. Split this over multiple jobs.
             executable = os.path.join(path, "dingo_generate_dataset")
             args_dict = {
-                "settings_file": os.path.join(temp_dir, settings_svd_part_fn),
+                "settings_file": os.path.abspath(os.path.join(temp_dir, settings_svd_part_fn)),
                 "num_processes": args.request_cpus,
                 "out_file": os.path.join(
                     temp_dir, svd_dataset_part_prefix + "$(Process).hdf5"
@@ -224,7 +225,7 @@ def create_dag(args, settings):
     # --- (a) Generate dataset. Split over multiple jobs.
     executable = os.path.join(path, "dingo_generate_dataset")
     args_dict = {
-        "settings_file": os.path.join(temp_dir, settings_part_fn),
+        "settings_file": os.path.abspath(os.path.join(temp_dir, settings_part_fn)),
         "num_processes": args.request_cpus,
         "out_file": os.path.join(temp_dir, dataset_part_prefix + "$(Process).hdf5"),
     }
@@ -265,6 +266,8 @@ def create_dag(args, settings):
 def main():
     args = parse_args()
 
+    args.temp_dir = os.path.abspath(args.temp_dir)
+    
     # Load settings
     with open(args.settings_file, "r") as f:
         settings = yaml.safe_load(f)

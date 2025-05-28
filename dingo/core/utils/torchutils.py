@@ -126,6 +126,7 @@ def get_scheduler_from_kwargs(
         "step": torch.optim.lr_scheduler.StepLR,
         "cosine": torch.optim.lr_scheduler.CosineAnnealingLR,
         "reduce_on_plateau": torch.optim.lr_scheduler.ReduceLROnPlateau,
+        "cosine_wr": torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
     }
     if not "type" in scheduler_kwargs:
         raise KeyError("Scheduler type needs to be specified.")

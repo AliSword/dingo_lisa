@@ -480,6 +480,7 @@ def train_epoch(pm, dataloader):
     )
 
     for batch_idx, data in enumerate(dataloader):
+        print(type(data), len(data))
         loss_info.update_timer()
         pm.optimizer.zero_grad()
         # data to device

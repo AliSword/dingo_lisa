@@ -145,3 +145,32 @@ def get_standardization_dict(
         "std": {k: std[k] for k in selected_parameters},
     }
     return standardization_dict
+
+
+def get_signal_duration(chirp_mass, f_min):
+    """
+    Calculates the time to coalescence [sec] of an inspiraling compact binary.
+
+    Parameters
+    ----------
+    chirp_mass: float
+    f_min: float
+    """
+    time = 2.18 * (1.21 / chirp_mass)**(5/3) * (100/f_min)**(8/3)
+    return time
+
+
+def get_snr(signal, psd, delta_f):
+    """
+    Calculates the optimsl SNR.
+
+    Parameters
+    ----------
+    signal : array_like
+    psd : array_like
+    delta_f : float
+    """
+    integrand = np.abs(signal)**2 / psd
+    snr_squared = 4 * np.sum(integrand) * delta_f
+    snr = np.sqrt(snr_squared)
+    return snr
