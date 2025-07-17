@@ -7,7 +7,7 @@ from threadpoolctl import threadpool_limits
 from torch.utils.data import DataLoader
 from bilby.gw.detector import InterferometerList
 from dingo.gw.lisa import LISAInterferometerList
-from dingo.gw.prior import default_extrinsic_dict, default_extrinsic_dict_lisa
+from dingo.gw.prior import default_extrinsic_dict_ligo, default_extrinsic_dict_lisa
 
 from dingo.gw.SVD import SVDBasis
 
@@ -112,7 +112,7 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
         # Build transforms
         transforms = [SampleExtrinsicParameters(extrinsic_prior_dict)]
     else:
-        extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"], default_extrinsic_dict)
+        extrinsic_prior_dict = get_extrinsic_prior_dict(data_settings["extrinsic_prior"], default_extrinsic_dict_ligo)
         if data_settings["inference_parameters"] == "default":
             data_settings["inference_parameters"] = default_inference_parameters
 
@@ -121,7 +121,7 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
         ifo_list = InterferometerList(data_settings["detectors"])
         # Build transforms
         transforms = [SampleExtrinsicParameters(extrinsic_prior_dict),
-                     GetDetectorTimes(ifo_list, ref_time)]
+                      GetDetectorTimes(ifo_list, ref_time)]
 
 
     extra_context_parameters = []
@@ -198,8 +198,6 @@ def set_train_transforms(wfd, data_settings, asd_dataset_path, omit_transforms=N
         transforms = [t for t in transforms if type(t) not in omit_transforms]
 
     wfd.transform = torchvision.transforms.Compose(transforms)
-    wfd.to_file('/dingo_lisa/examples/lisa/new_runs/training_data_test_projections/waveform_dataset.hdf5')
-
 
 def build_svd_for_embedding_network(
     wfd: WaveformDataset,

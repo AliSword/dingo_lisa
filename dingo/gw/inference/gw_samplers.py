@@ -8,7 +8,7 @@ from bilby.gw.detector import InterferometerList
 from torchvision.transforms import Compose
 
 
-from dingo.gw.prior import default_extrinsic_dict, default_extrinsic_dict_lisa
+from dingo.gw.prior import default_extrinsic_dict_ligo, default_extrinsic_dict_lisa
 from dingo.core.samplers import Sampler, GNPESampler
 from dingo.core.transforms import GetItem, RenameKey
 from dingo.gw.domains import build_domain
@@ -127,7 +127,7 @@ class GWSamplerMixin(object):
         ifo_list = self.metadata["train_settings"]["data"]["detectors"]
         default_extrinsic_dict = (
             default_extrinsic_dict_lisa if any(det in ("LISA1", "LISA2") for det in ifo_list)
-            else default_extrinsic_dict
+            else default_extrinsic_dict_ligo
         )
 
         extrinsic_prior = get_extrinsic_prior_dict(

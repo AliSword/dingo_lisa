@@ -10,12 +10,12 @@ from dingo.core.density import (
     interpolated_sample_and_log_prob_multi,
     interpolated_log_prob_multi,
 )
-from dingo.gw.prior import default_extrinsic_dict, default_extrinsic_dict_lisa
+from dingo.gw.prior import default_extrinsic_dict_ligo, default_extrinsic_dict_lisa
 from dingo.core.multiprocessing import apply_func_with_multiprocessing
 from dingo.core.result import Result as CoreResult
 from dingo.gw.conversion import change_spin_conversion_phase
 from dingo.gw.domains import build_domain
-from dingo.gw.gwutils import get_extrinsic_prior_dict, get_window_factor
+from dingo.gw.gwutils import get_extrinsic_prior_dict, get_window_factor, get_optimal_snr
 from dingo.gw.likelihood import StationaryGaussianGWLikelihood
 from dingo.gw.prior import build_prior_with_defaults
 
@@ -184,7 +184,7 @@ class Result(CoreResult):
         intrinsic_prior = self.base_metadata["dataset_settings"]["intrinsic_prior"]
         default_extrinsic_dict = (
             default_extrinsic_dict_lisa if any(det in ("LISA1", "LISA2") for det in ifo_list)
-            else default_extrinsic_dict
+            else default_extrinsic_dict_ligo
         )
 
         extrinsic_prior = get_extrinsic_prior_dict(
@@ -606,4 +606,3 @@ class Result(CoreResult):
                 except AttributeError:
                     continue
         return prior
-
