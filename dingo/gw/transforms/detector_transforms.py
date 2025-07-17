@@ -44,19 +44,25 @@ def time_delay_from_geocenter(
     -------
     float: Time delay between the two detectors in the geocentric frame
     """
+
+    if isinstance(ra, np.floating):
+        ra = float(ra)
+    if isinstance(dec, np.floating):
+        dec = float(dec)
+        
     # check that ra and dec are of same type and length
-    if type(ra) != type(dec):
-        raise ValueError(
-            f"ra type ({type(ra)}) and dec type ({type(dec)}) don't match."
-        )
     if isinstance(ra, (np.ndarray, torch.Tensor)):
+        if not isinstance(dec, type(ra)):
+            raise ValueError(
+                f"ra and dec must be of the same array type. Got {type(ra)} and {type(dec)}."
+            )
         if len(ra.shape) != 1:
-            raise ValueError(f"Only one axis expected for ra and dec, got multiple.")
+            raise ValueError(f"Only one axis expected for ra and dec, got shape {ra.shape}.")
         if ra.shape != dec.shape:
             raise ValueError(
                 f"Shapes of ra ({ra.shape}) and dec ({dec.shape}) don't match."
             )
-
+        
     if isinstance(ra, (float, np.float32, np.float64)):
         return ifo.time_delay_from_geocenter(ra, dec, time)
 
@@ -202,6 +208,7 @@ class ProjectOntoDetectors(object):
                     #     tc_ref != 0, undo this here by subtracting it from dt.
                     dt = extrinsic_parameters[f"{ifo.name}_time"] - tc_ref
                     strains[ifo.name] = self.domain.time_translate_data(strain, dt)
+                    
 
                     # Add extrinsic parameters corresponding to the transformations
                     # applied in the loop above to parameters. These have all been popped off of
@@ -218,7 +225,8 @@ class ProjectOntoDetectors(object):
                     print(f"Parameter {param_name} not found in extrinsic_parameters for {ifo.name}")
             elif isinstance(self.ifo_list, LISAInterferometerList):
                 try:
-                    strains[ifo.name] = strain 
+                    dt = tc_new - tc_ref
+                    strains[ifo.name] = self.domain.time_translate_data(strain, dt)
                     
                     # Add extrinsic parameters corresponding to the transformations
                     # applied in the loop above to parameters. These have all been popped off of
