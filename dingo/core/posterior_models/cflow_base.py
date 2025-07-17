@@ -158,8 +158,8 @@ class ContinuousFlowPosteriorModel(BasePosteriorModel):
             lambda t, theta_t: self.evaluate_vector_field(t, theta_t, *context),
             theta_0,
             self.integration_range,
-            atol=1e-4,
-            rtol=1e-4,
+            atol=1e-8,
+            rtol=1e-8,
             method="dopri5",
         )
 

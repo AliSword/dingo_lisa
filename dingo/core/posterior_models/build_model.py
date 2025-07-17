@@ -3,6 +3,7 @@ import torch
 from dingo.core.posterior_models.normalizing_flow import NormalizingFlowPosteriorModel
 from dingo.core.posterior_models.flow_matching import FlowMatchingPosteriorModel
 from dingo.core.posterior_models.score_matching import ScoreDiffusionPosteriorModel
+from dingo.core.posterior_models.trig_flow_matching import TrigFlowMatchingPosteriorModel
 from dingo.core.utils.backward_compatibility import update_model_config
 
 
@@ -35,6 +36,7 @@ def build_model_from_kwargs(filename: str = None, settings: dict = None, **kwarg
         "normalizing_flow": NormalizingFlowPosteriorModel,
         "flow_matching": FlowMatchingPosteriorModel,
         "score_matching": ScoreDiffusionPosteriorModel,
+        "trig_flow_matching": TrigFlowMatchingPosteriorModel,
     }
 
     if filename is not None:
