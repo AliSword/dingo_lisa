@@ -11,8 +11,8 @@ from dingo.gw.domains import (
     build_domain,
     build_domain_from_model_metadata,
 )
-from dingo.gw.prior import default_extrinsic_dict, default_extrinsic_dict_lisa
-from dingo.gw.gwutils import get_extrinsic_prior_dict, get_signal_duration, get_snr
+from dingo.gw.prior import default_extrinsic_dict_ligo, default_extrinsic_dict_lisa
+from dingo.gw.gwutils import get_extrinsic_prior_dict, get_signal_duration, get_optimal_snr
 from dingo.gw.prior import build_prior_with_defaults, split_off_extrinsic_parameters
 from dingo.gw.transforms import (
     GetDetectorTimes,
@@ -323,8 +323,8 @@ class Injection(GWSignal):
         intrinsic_prior = metadata["dataset_settings"]["intrinsic_prior"]
         ifo_list = metadata["train_settings"]["data"]["detectors"]
         default_extrinsic_dict = (
-            default_extrinsic_dict_lisa if any(det in ("LISA1", "LISA2") for det in ifo_list)
-            else default_extrinsic_dict
+            default_extrinsic_dict_lisa if any(ifo in ("LISA1", "LISA2") for ifo in ifo_list)
+            else default_extrinsic_dict_ligo
         )
 
         extrinsic_prior = get_extrinsic_prior_dict(
@@ -369,8 +369,10 @@ class Injection(GWSignal):
         signal = self.signal(theta)
         print("theta:", theta)
         duration = get_signal_duration(theta["chirp_mass"], self.data_domain.f_min)
-        print(f"Signal duration: {duration / 3600:.2f} hours")
-        print(type(theta["theta_s"]))
+        print("f min:", self.data_domain.f_min)
+        print("f max:", self.data_domain.f_max)
+        print(f"Signal duration: {duration / 3600:.4f} hours")
+        #print(type(theta["theta_s"]))
         try:
             # Be careful to use the ASD included with the signal, since each time
             # self.asd is accessed it gives a different ASD (if using an ASD dataset).
@@ -381,14 +383,17 @@ class Injection(GWSignal):
         if self.whiten:
             print("self.whiten was set to True. Resetting to False.")
             self.whiten = False
-        psd1 = asd['LISA1']**2
-        psd2 = asd['LISA2']**2
-        #snr1 = get_snr(signal["waveform"]["LISA1"], psd1, self.data_domain.delta_f)
-        #snr2 = get_snr(signal["waveform"]["LISA2"], psd2, self.data_domain.delta_f)
-        #snr_total = np.sqrt(snr1**2 + snr2**2)
-        #print("Snr1:", snr1)
-        #print("Snr2:", snr2)
-        #print("Snr:", snr_total)
+
+        if any(ifo.name in ("LISA1", "LISA2") for ifo in self.ifo_list):
+            snr_lisa1 = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="LISA1")
+            snr_lisa2 = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="LISA2")
+            snr_total = np.sqrt(snr_lisa1**2 + snr_lisa2**2)
+        else:
+            #snr_ligo_l1 = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="L1")
+            snr_ligo_h1 = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="H1")
+            snr_total = snr_ligo_h1 #np.sqrt(snr_ligo_l1**2 + snr_ligo_h1**2)
+
+        print("snr:", snr_total)
         
         data = {}
         freq = []

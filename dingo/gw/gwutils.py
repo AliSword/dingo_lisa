@@ -3,7 +3,7 @@ from scipy.signal.windows import tukey
 from scipy.interpolate import interp1d
 from bilby.gw.detector import PowerSpectralDensity
 
-from dingo.gw.prior import default_extrinsic_dict
+#from dingo.gw.prior import default_extrinsic_dict
 from dingo.gw.prior import BBHExtrinsicPriorDict
 
 
@@ -160,17 +160,73 @@ def get_signal_duration(chirp_mass, f_min):
     return time
 
 
-def get_snr(signal, psd, delta_f):
+
+def get_inner_product(a_f, b_f, Sn_f, delta_f):
     """
-    Calculates the optimsl SNR.
+    Compute the noise-weighted inner product (a | b)
+    
+    Parameters:
+    - a_f, b_f: arrays of complex frequency-domain data
+    - Sn_f: 1D array of one-sided noise PSD evaluated at the same frequencies
+    - delta_f: frequency resolution (assume uniform grid)
+
+    Returns:
+    - scalar inner product (a|b)
+    """
+    integrand = np.conj(a_f) * b_f / Sn_f
+    return 4 * np.real(np.sum(integrand) * delta_f)
+
+
+def get_optimal_snr(signal, asd, delta_f, channel=None):
+    """
+    Compute the optimal SNR for a given channel using the signal and PSD.
 
     Parameters
     ----------
-    signal : array_like
-    psd : array_like
+    signal : dict
+        Dictionary with a "waveform" key containing the channels (e.g., LISA1, L1, etc.).
+    psd : array
+        One-sided noise Power Spectral Density (PSD) evaluated at the same frequencies as the waveform.
     delta_f : float
+        Frequency resolution (Δf).
+    channel : str or None
+        Name of the channel to use. If None, the function selects one automatically.
+
+    Returns
+    -------
+    snr_opt : float
+        Optimal SNR computed as sqrt((h|h)) for the selected channel.
     """
-    integrand = np.abs(signal)**2 / psd
-    snr_squared = 4 * np.sum(integrand) * delta_f
-    snr = np.sqrt(snr_squared)
-    return snr
+
+    waveform_dict = signal["waveform"]
+
+    # If no channel specified, choose the first one available
+    if channel is None:
+        if not waveform_dict:
+            raise ValueError("No channel available in signal['waveform']")
+        channel = next(iter(waveform_dict))
+
+    if channel not in waveform_dict:
+        raise ValueError(f"Channel '{channel}' not found in signal['waveform']")
+
+    if channel not in asd:
+        raise ValueError(f"Channel '{channel}' not found in PSD dictionary")
+
+    h_f = waveform_dict[channel]
+    asd_f = asd[channel]
+    psd_f = asd_f**2  
+
+    # compute SNR^2 = (h|h)
+    snr_squared = get_inner_product(h_f, h_f, psd_f, delta_f)
+
+    # compute SNR below a given frequency
+    '''if f_max is not None:
+        if freqs is None:
+            raise ValueError("freqs must be provided if f_max is set")
+        mask = freqs <= f_max
+        h_f_cut = h_f[mask]
+        psd_f_cut = psd_f[mask]
+        snr_squared_partial = get_inner_product(h_f_cut, h_f_cut, psd_f_cut, delta_f)
+        snr_fraction = snr_squared_partial / snr_squared'''
+
+    return np.sqrt(snr_squared)
