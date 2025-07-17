@@ -153,18 +153,18 @@ class LISALowFrequencyInterferometer(object):
         
         if self.name =='LISA1':
             if mode =='plus':
-                return np.sqrt(3.0) * 0.5 * 0.5 * (1 + costheta**2) * np.cos(2 * phi) * np.cos(2 * psi) - costheta \
-                        * np.sin(2 * phi) * np.sin(2 * psi)
+                return np.sqrt(3.0) * 0.5 * (0.5 * (1 + costheta**2) * np.cos(2 * phi) * np.cos(2 * psi) - costheta \
+                        * np.sin(2 * phi) * np.sin(2 * psi))
             elif mode == 'cross':
-                return np.sqrt(3.0) * 0.5 * 0.5 * (1 + costheta**2) * np.cos(2 * phi) * np.sin(2 * psi) + costheta \
-                        * np.sin(2 * phi) * np.cos(2 * psi)
+                return np.sqrt(3.0) * 0.5 * (0.5 * (1 + costheta**2) * np.cos(2 * phi) * np.sin(2 * psi) + costheta \
+                        * np.sin(2 * phi) * np.cos(2 * psi))
         elif self.name == 'LISA2':
             if mode =='plus':
-                return np.sqrt(3.0) * 0.5 * 0.5 * (1 + costheta**2) * np.sin(2 * phi) * np.cos(2 * psi) + costheta \
-                        * np.cos(2 * phi) * np.sin(2 * psi)
+                return np.sqrt(3.0) * 0.5 * (0.5 * (1 + costheta**2) * np.sin(2 * phi) * np.cos(2 * psi) + costheta \
+                        * np.cos(2 * phi) * np.sin(2 * psi))
             elif mode == 'cross':
-                return np.sqrt(3.0) * 0.5 * 0.5 * (1 + costheta**2) * np.sin(2 * phi) * np.sin(2 * psi) - costheta \
-                        * np.cos(2 * phi) * np.cos(2 * psi)
+                return np.sqrt(3.0) * 0.5 * (0.5 * (1 + costheta**2) * np.sin(2 * phi) * np.sin(2 * psi) - costheta \
+                        * np.cos(2 * phi) * np.cos(2 * psi))
         
 
 def get_empty_lisa_interferometer(ifo_name): 
