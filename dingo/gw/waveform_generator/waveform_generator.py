@@ -494,7 +494,7 @@ class WaveformGenerator:
 
         # 1e-20 is reasonable for LIGO, but not for LISA.
         # TO DO: automatically select the threshold (maybe based on the mass range?)
-        if max(np.max(np.abs(hp.data.data)), np.max(np.abs(hc.data.data))) > 1e-10:  
+        if max(np.max(np.abs(hp.data.data)), np.max(np.abs(hc.data.data))) > 1e-9:  
             print(
                 f"Generation with parameters {parameters_lal} likely numerically "
                 f"unstable due to multibanding, turn off multibanding."
@@ -507,7 +507,7 @@ class WaveformGenerator:
             hp, hc = LS.SimInspiralFD(
                 *parameters_lal[:-2], lal_dict, parameters_lal[-1]
             )
-            if max(np.max(np.abs(hp.data.data)), np.max(np.abs(hc.data.data))) > 1e-10:
+            if max(np.max(np.abs(hp.data.data)), np.max(np.abs(hc.data.data))) > 1e-9:
                 print(
                     f"Warning: turning off multibanding for parameters {parameters_lal}"
                     f"likely numerically might not have fixed it, check manually."
