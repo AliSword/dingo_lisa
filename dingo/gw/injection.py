@@ -425,6 +425,7 @@ class Injection(GWSignal):
             
 
         signal["waveform"] = data
+        signal["snr_total"] = snr_total
 
         return signal
 
