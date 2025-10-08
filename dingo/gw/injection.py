@@ -387,13 +387,26 @@ class Injection(GWSignal):
         if any(ifo.name in ("LISA1", "LISA2") for ifo in self.ifo_list):
             snr_lisa1 = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="LISA1")
             snr_lisa2 = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="LISA2")
+            #snr_lisa1_p = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="LISA1", f_max=1e-3, freqs=self.data_domain.sample_frequencies)[1]
+            #snr_lisa2_p = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="LISA2", f_max=1e-3, freqs=self.data_domain.sample_frequencies)[1]
             snr_total = np.sqrt(snr_lisa1**2 + snr_lisa2**2)
+            #snt_partial_tot = np.sqrt(snr_lisa1_p**2 + snr_lisa2_p**2)
         else:
             #snr_ligo_l1 = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="L1")
             snr_ligo_h1 = get_optimal_snr(signal, asd, self.data_domain.delta_f, channel="H1")
             snr_total = snr_ligo_h1 #np.sqrt(snr_ligo_l1**2 + snr_ligo_h1**2)
-
+            
+        print('signal:', signal)
+        print('len signal:', len(signal['waveform']['LISA1']))
         print("snr:", snr_total)
+        print("snr1:", snr_lisa1)
+        print("snr2:", snr_lisa2)
+        print('fmin:', self.data_domain.f_min)
+        print('fmax:', self.data_domain.f_max)
+        print('asd:', asd)
+        print('len asd', len(asd['LISA1']))
+        #print('snr_partial:', snt_partial_tot)
+
         
         data = {}
         freq = []
@@ -404,21 +417,28 @@ class Injection(GWSignal):
                 * self.data_domain.noise_std
             )
 
-            #print('noise std:', self.data_domain.noise_std)
-            #print('noise:', noise)
-            #print('asd:', asd[ifo])
             d = s + noise
             data[ifo] = self.data_domain.update_data(d, low_value=0.0)
+            
+            print('random:', np.random.randn(len(s)))    
+            print('noise std:', self.data_domain.noise_std)
+            print('noise:', noise)
             freq = self.data_domain.sample_frequencies
             #print(len(noise))
             #print(len(freq))
+            psd_est = 2 * self.data_domain.delta_f * (np.abs(noise)**2)
 
+            asd_est = np.sqrt(psd_est)
             '''plt.figure(figsize=(10, 6))
             
-            plt.loglog(freq, np.abs(noise), label=f'Noise - {ifo}')
+            plt.loglog(freq, asd_est, label=f'{ifo}')
+            plt.loglog(freq, asd[ifo], label='Analytic ASD')
+            #plt.loglog(freq, np.abs(noise)/asd[ifo], label='Ratio')
+            #plt.loglog(freq, np.abs(signal['waveform'][ifo]), label='Signal')
+            #plt.axhline(self.data_domain.noise_std, color='k', linestyle='--', linewidth=0.8, label='noise std')
     
             plt.xlabel('Frequenza [Hz]')
-            plt.ylabel('Rumore [1/sqrt(Hz)]')
+            plt.ylabel('ASD[1/sqrt(Hz)]')
             plt.legend()
             plt.grid(True)
             plt.show()'''

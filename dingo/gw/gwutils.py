@@ -174,7 +174,9 @@ def get_inner_product(a_f, b_f, Sn_f, delta_f):
     - scalar inner product (a|b)
     """
     integrand = np.conj(a_f) * b_f / Sn_f
+    
     return 4 * np.real(np.sum(integrand) * delta_f)
+
 
 
 def get_optimal_snr(signal, asd, delta_f, channel=None):
@@ -188,7 +190,7 @@ def get_optimal_snr(signal, asd, delta_f, channel=None):
     psd : array
         One-sided noise Power Spectral Density (PSD) evaluated at the same frequencies as the waveform.
     delta_f : float
-        Frequency resolution (Δf).
+        Frequency resolution.
     channel : str or None
         Name of the channel to use. If None, the function selects one automatically.
 
@@ -219,14 +221,5 @@ def get_optimal_snr(signal, asd, delta_f, channel=None):
     # compute SNR^2 = (h|h)
     snr_squared = get_inner_product(h_f, h_f, psd_f, delta_f)
 
-    # compute SNR below a given frequency
-    '''if f_max is not None:
-        if freqs is None:
-            raise ValueError("freqs must be provided if f_max is set")
-        mask = freqs <= f_max
-        h_f_cut = h_f[mask]
-        psd_f_cut = psd_f[mask]
-        snr_squared_partial = get_inner_product(h_f_cut, h_f_cut, psd_f_cut, delta_f)
-        snr_fraction = snr_squared_partial / snr_squared'''
-
     return np.sqrt(snr_squared)
+

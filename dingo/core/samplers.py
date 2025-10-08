@@ -136,7 +136,9 @@ class Sampler(object):
         self,
         num_samples: int,
         context: Optional[dict] = None,
+        num_steps: Optional[int] = None,
     ) -> dict:
+        
         if not self.unconditional_model:
             if context is None:
                 raise ValueError("Context required to run sampler.")
